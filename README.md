@@ -1,75 +1,95 @@
-# Welcome to your Expo app 👋
+# 📱 Lingua Flow
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile application for learning foreign languages through AI-powered contextual dialogs.
 
-## Get started
+## 🌍 Supported Languages
 
-1. Install dependencies
+Finnish (FI) • English (EN) • Spanish (ES) • German (DE) • French (FR) • Italian (IT) • Portuguese (PT) • Swedish (SE) • Norwegian (NO)
 
-   ```bash
-   npm install
-   ```
+## 🚀 Technology Stack
 
-2. Start the app
+- **Framework:** React Native + Expo
+- **Navigation:** Expo Router v6
+- **Styling:** NativeWind (Tailwind CSS)
+- **Backend:** Supabase (PostgreSQL + Edge Functions)
+- **State Management:** React Query
+- **AI:** Groq API (Llama 3) + ElevenLabs TTS
 
-   ```bash
-   npx expo start
-   ```
+## 📋 Features
 
-In the output, you'll find options to open the app in a
+### MVP (Phase 1-5)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- ✅ User authentication (Email + Google OAuth)
+- ✅ AI-powered dialog generation
+- ✅ 4 training levels (Learn, Pronunciation, Translation, Listening)
+- ✅ Subscription system (FREE, PRO, PREMIUM)
+- ✅ 7-day PRO trial
+- ✅ ElevenLabs voice synthesis for premium users
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🛠️ Development Setup
 
-## Get a fresh project
+### Prerequisites
 
-When you're ready, run:
+- Node.js 18+
+- Expo CLI
+- Supabase account
+
+### Installation
 
 ```bash
-npm run reset-project
+# Clone repository
+git clone https://github.com/your-username/lingua-flow.git
+cd lingua-flow
+
+# Install dependencies
+npm install
+
+# Setup environment variables
+cp .env.example .env
+# Add your Supabase keys to .env
+
+# Start development server
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Environment Variables
 
-## Learn more
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 📚 Project Structure
 
 ```
-lflow
-├─ app
-│  ├─ global.css
-│  └─ index.js
-├─ app.json
-├─ assets
-│  └─ images
-│     ├─ favicon.png
-│     ├─ icon.png
-│     ├─ partial-react-logo.png
-│     ├─ react-logo.png
-│     ├─ react-logo@2x.png
-│     ├─ react-logo@3x.png
-│     └─ splash-icon.png
-├─ babel.config.js
-├─ eslint.config.js
-├─ metro.config.cjs
-├─ package-lock.json
-├─ package.json
-├─ README.md
-└─ tailwind.config.js
+app/               # Expo Router screens
+├── (auth)/        # Authentication screens
+├── (tabs)/        # Main app tabs
+├── dialogs/       # Dialog screens
+└── modals/        # Modal screens
 
+components/        # Reusable React components
+hooks/            # Custom React hooks
+contexts/         # React contexts
+lib/              # Utilities and configs
 ```
+
+## 🗓️ Development Roadmap
+
+- [x] Phase 1: Foundation (Auth, Navigation) - 2 weeks
+- [ ] Phase 2: Core Features (Dialog Generation) - 3-4 weeks
+- [ ] Phase 3: Training System (4 levels) - 3-4 weeks
+- [ ] Phase 4: Monetization (Stripe, Trial) - 2-3 weeks
+- [ ] Phase 5: Polish (Stats, Settings) - 1-2 weeks
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 👨‍💻 Author
+
+Pa-Edem - [@Pa-Edem](https://github.com/Pa-Edem)
+
+---
+
+**Status:** 🚧 In Development (Phase 1)
