@@ -1,10 +1,105 @@
-import { Text, View } from 'react-native';
-import './global.css';
+import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { Image, Pressable, Text, View } from 'react-native';
 
-export default function Home() {
+export default function Welcome() {
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+  };
+
+  const currentLang = i18n.language;
+
   return (
-    <View className='flex-1 justify-center items-center bg-bgCard p-4'>
-      <Text className='text-4xl text-textHead text-center font-bold'>Lingua Flow</Text>
+    <View className='flex-1 bg-bgMain px-6 justify-center items-center'>
+      {/* Logo */}
+      <Image source={require('../assets/images/logo.png')} className='w-24 h-24 mb-4' resizeMode='contain' />
+
+      {/* App Name */}
+      <Text className='text-3xl text-textHead mb-8' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+        Lingua Flow
+      </Text>
+
+      {/* Title */}
+      <Text className='text-xl text-textHead mb-4 text-center' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+        {t('welcome.title')}
+      </Text>
+
+      {/* Description */}
+      <View className='mb-8'>
+        <Text className='text-base text-textText mb-3 text-center' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+          {t('welcome.description.paragraph1')}
+        </Text>
+        <Text className='text-base text-textText mb-3 text-center' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+          {t('welcome.description.paragraph2')}
+        </Text>
+      </View>
+
+      {/* Language Toggle - Улучшенный дизайн */}
+      <View className='w-full bg-bgCard rounded-full p-1 mb-6 border border-brdLight'>
+        <View className='flex-row'>
+          <Pressable
+            onPress={() => changeLanguage('en')}
+            className={`flex-1 py-3 rounded-full items-center justify-center ${
+              currentLang === 'en' ? 'bg-bgMain' : 'bg-transparent'
+            }`}
+            style={
+              currentLang === 'en'
+                ? {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }
+                : {}
+            }
+          >
+            <Text
+              className={`text-sm ${currentLang === 'en' ? 'text-textHead' : 'text-textText'}`}
+              style={{ fontFamily: 'RobotoCondensed_700Bold' }}
+            >
+              {t('welcome.language.en')}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => changeLanguage('ru')}
+            className={`flex-1 py-3 rounded-full items-center justify-center ${
+              currentLang === 'ru' ? 'bg-bgMain' : 'bg-transparent'
+            }`}
+            style={
+              currentLang === 'ru'
+                ? {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }
+                : {}
+            }
+          >
+            <Text
+              className={`text-sm ${currentLang === 'ru' ? 'text-textHead' : 'text-textText'}`}
+              style={{ fontFamily: 'RobotoCondensed_700Bold' }}
+            >
+              {t('welcome.language.ru')}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Start Button */}
+      <Pressable
+        onPress={() => router.push('/(auth)/login')}
+        className='bg-greenDefault w-full py-4 rounded-full items-center active:bg-greenDark'
+      >
+        <Text className='text-white text-lg' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+          {t('welcome.button')} →
+        </Text>
+      </Pressable>
     </View>
   );
 }

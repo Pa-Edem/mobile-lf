@@ -1,3 +1,4 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
@@ -32,6 +33,13 @@ module.exports = {
         warning: 'hsl(45, 100%, 75%)', // жёлтый
         error: 'hsl(5, 80%, 70%)', // красный
         info: 'hsl(210, 70%, 50%)', // голубой
+        /* Белые/светлые для чатов */
+        chatLeft: 'hsl(200, 75%, 95%)' /* Голубоватый белый */,
+        chatRight: 'hsl(60, 85%, 95%)' /* Желтоватый белый */,
+      },
+      fontFamily: {
+        roboto: ['RobotoCondensed_400Regular'],
+        robotoBold: ['RobotoCondensed_700Bold'],
       },
     },
   },

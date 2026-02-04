@@ -1,0 +1,23 @@
+{
+  "welcome": {
+    "title": "DIALOGUES YOUR WAY",
+    "description": {
+      "paragraph1": "Create your own dialogues: choose your level, topic, and key words.",
+      "paragraph2": "Your personal tutor with modes ranging from reading to pronunciation and translation. Instant feedback and analysis tailored to your level."
+    },
+    "language": {
+      "en": "English (EN)",
+      "ru": "Russian (RU)"
+    },
+    "button": "Start"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "or": "OR",
+    "continueWithGoogle": "Continue with Google"
+  }
+}
