@@ -15,9 +15,20 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "email": "Email",
+    "emailPlaceholder": "Enter your email",
     "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot password?",
     "or": "OR",
     "continueWithGoogle": "Continue with Google"
+  },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "sendLink": "Send Reset Link",
+    "backToLogin": "Back to Login",
+    "success": "Check your email!",
+    "successMessage": "We've sent a password reset link to your email."
   }
 }

@@ -15,9 +15,20 @@
     "signIn": "Войти",
     "signUp": "Регистрация",
     "email": "Электронная почта",
+    "emailPlaceholder": "Введите ваш email",
     "password": "Пароль",
+    "passwordPlaceholder": "Введите ваш пароль",
+    "confirmPassword": "Подтвердите пароль",
     "forgotPassword": "Забыли пароль?",
     "or": "ИЛИ",
-    "continueWithGoogle": "Продолжить через Google"
+    "continueWithGoogle": "Продолжить с Google"
+  },
+  "forgotPassword": {
+    "title": "Восстановление пароля",
+    "description": "Введите адрес электронной почты, и мы отправим вам ссылку для сброса пароля.",
+    "sendLink": "Отправить ссылку",
+    "backToLogin": "Назад к входу",
+    "success": "Проверьте почту!",
+    "successMessage": "Мы отправили ссылку для сброса пароля на вашу почту."
   }
 }
