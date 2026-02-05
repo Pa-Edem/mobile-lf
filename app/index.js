@@ -1,17 +1,20 @@
+// app/index.js
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
+import SplashScreen from '../components/SplashScreen';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { saveLanguage } from '../lib/i18n';
 
 export default function Welcome() {
   const { t, i18n } = useTranslation();
   const { session, loading } = useSupabase();
+  const [showSplash, setShowSplash] = useState(true);
 
   const changeLanguage = async (lang) => {
     await i18n.changeLanguage(lang);
-    await saveLanguage(lang); // Сохраняем выбор языка в AsyncStorage
+    await saveLanguage(lang);
   };
 
   const currentLang = i18n.language;
@@ -19,16 +22,32 @@ export default function Welcome() {
   // Auto-redirect если уже залогинен
   useEffect(() => {
     if (!loading && session) {
-      router.replace('/(tabs)');
+      // Небольшая задержка для показа анимации Splash
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 800); // Синхронизировано с анимацией (800ms)
     }
   }, [session, loading]);
 
-  // Показываем loading пока проверяем session
-  if (loading) {
-    return null; // TODO можно показать splash screen
+  // Управление показом Splash Screen
+  useEffect(() => {
+    if (!loading) {
+      // Если нет session → показываем Welcome через 1.2 сек
+      if (!session) {
+        setTimeout(() => {
+          setShowSplash(false);
+        }, 1200);
+      }
+      // Если есть session → Splash скроется автоматически при редиректе
+    }
+  }, [loading, session]);
+
+  // Показываем Splash Screen пока loading или первые 1.2 сек
+  if (loading || showSplash) {
+    return <SplashScreen />;
   }
 
-  // Если есть session - не рендерим, сразу редирект
+  // Если есть session - не рендерим (произойдёт редирект)
   if (session) {
     return null;
   }
