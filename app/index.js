@@ -1,15 +1,35 @@
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
+import { useSupabase } from '../contexts/SupabaseContext';
 
 export default function Welcome() {
   const { t, i18n } = useTranslation();
+  const { session, loading } = useSupabase();
 
   const changeLanguage = (lang) => {
     i18n.changeLanguage(lang);
   };
 
   const currentLang = i18n.language;
+
+  // Auto-redirect если уже залогинен
+  useEffect(() => {
+    if (!loading && session) {
+      router.replace('/(tabs)');
+    }
+  }, [session, loading]);
+
+  if (loading) {
+    return (
+      <View className='flex-1 bg-bgMain justify-center items-center'>
+        <Text className='text-lg text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className='flex-1 bg-bgMain px-6 justify-center items-center'>

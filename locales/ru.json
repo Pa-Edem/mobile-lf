@@ -27,8 +27,44 @@
     "title": "Восстановление пароля",
     "description": "Введите адрес электронной почты, и мы отправим вам ссылку для сброса пароля.",
     "sendLink": "Отправить ссылку",
-    "backToLogin": "Назад к входу",
+    "backToLogin": "Назад",
     "success": "Проверьте почту!",
     "successMessage": "Мы отправили ссылку для сброса пароля на вашу почту."
+  },
+  "main": {
+    "title": "Lingua Flow",
+    "usageLimits": "ЛИМИТЫ ИСПОЛЬЗОВАНИЯ",
+    "collapse": "СВЕРНУТЬ",
+    "expand": "РАЗВЕРНУТЬ",
+    "generations": "ГЕНЕРАЦИИ",
+    "proFeatures": "PRO ФУНКЦИИ",
+    "savedDialogs": "СОХРАНЁННЫЕ ДИАЛОГИ",
+    "lines": "строк",
+    "endOfDialogs": "КОНЕЦ СПИСКА ДИАЛОГОВ"
+  },
+  "settings": {
+    "title": "Настройки",
+    "appearance": "ВНЕШНИЙ ВИД",
+    "theme": "Тема",
+    "language": "ЯЗЫК",
+    "appLanguage": "ЯЗЫК ПРИЛОЖЕНИЯ",
+    "targetLanguage": "ЯЗЫК ОБУЧЕНИЯ",
+    "voiceSettings": "НАСТРОЙКИ ГОЛОСА",
+    "useBrowserVoices": "Использовать встроенные голоса",
+    "voice": "Голос",
+    "speechRate": "Скорость речи",
+    "preListening": "Прослушивание",
+    "test": "ТЕСТ",
+    "done": "ГОТОВО"
+  },
+  "tabs": {
+    "home": "Главная",
+    "settings": "Настройки",
+    "profile": "Профиль",
+    "stats": "Статистика",
+    "messages": "Уведомления"
+  },
+  "common": {
+    "comingSoon": "Скоро"
   }
 }

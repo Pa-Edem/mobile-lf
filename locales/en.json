@@ -27,8 +27,44 @@
     "title": "Reset Password",
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "sendLink": "Send Reset Link",
-    "backToLogin": "Back to Login",
+    "backToLogin": "Back",
     "success": "Check your email!",
     "successMessage": "We've sent a password reset link to your email."
+  },
+  "main": {
+    "title": "Lingua Flow",
+    "usageLimits": "USAGE LIMITS",
+    "collapse": "COLLAPSE",
+    "expand": "EXPAND",
+    "generations": "GENERATIONS",
+    "proFeatures": "PRO FEATURES",
+    "savedDialogs": "SAVED DIALOGS",
+    "lines": "lines",
+    "endOfDialogs": "END OF RECENT DIALOGS"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "APPEARANCE",
+    "theme": "Theme",
+    "language": "LANGUAGE",
+    "appLanguage": "APPLICATION LANGUAGE",
+    "targetLanguage": "LANGUAGE TO LEARN",
+    "voiceSettings": "VOICE SETTINGS",
+    "useBrowserVoices": "Use browser voices",
+    "voice": "Voice",
+    "speechRate": "Speech rate",
+    "preListening": "Pre-listening",
+    "test": "TEST",
+    "done": "DONE"
+  },
+  "tabs": {
+    "home": "Home",
+    "settings": "Settings",
+    "profile": "Profile",
+    "stats": "Stats",
+    "messages": "Messages"
+  },
+  "common": {
+    "comingSoon": "Coming Soon"
   }
 }

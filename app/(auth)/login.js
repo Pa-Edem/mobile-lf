@@ -13,6 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function AuthScreen() {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { signIn, signUp, isLoading } = useAuth();
 
   const isSignIn = mode === 'signIn';
 
@@ -38,21 +39,19 @@ export default function AuthScreen() {
       return;
     }
 
-    setLoading(true);
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
 
     try {
-      // TODO: Реализовать auth через Supabase
-      console.log(isSignIn ? 'Sign In' : 'Sign Up', { email, password });
-
-      // Временная заглушка
-      Alert.alert('Success', `${isSignIn ? 'Signed In' : 'Signed Up'} successfully!`);
-
-      // Переход на главный экран
-      // router.replace('/(tabs)');
+      if (isSignIn) {
+        await signIn(email, password);
+      } else {
+        await signUp(email, password);
+      }
     } catch (error) {
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
+      Alert.alert('Error', error.message || 'Authentication failed');
     }
   };
 
@@ -196,13 +195,13 @@ export default function AuthScreen() {
         {/* Auth Button */}
         <Pressable
           onPress={handleAuth}
-          disabled={loading}
+          disabled={isLoading}
           className={`w-full py-4 rounded-full items-center mb-6 ${
-            loading ? 'bg-greenLight' : 'bg-greenDefault active:bg-greenDark'
+            isLoading ? 'bg-greenLight' : 'bg-greenDefault active:bg-greenDark'
           }`}
         >
           <Text className='text-white text-lg' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-            {loading ? '...' : t(isSignIn ? 'auth.signIn' : 'auth.signUp')}
+            {isLoading ? '...' : t(isSignIn ? 'auth.signIn' : 'auth.signUp')}
           </Text>
         </Pressable>
 
