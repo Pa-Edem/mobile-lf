@@ -1,25 +1,121 @@
+// app/(tabs)/settings.js
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import CustomAlert from '../../components/CustomAlert';
+import LanguagePickerModal from '../../components/LanguagePickerModal';
+import { useProfile, useUpdateProfile } from '../../hooks/useProfile';
+import { saveLanguage } from '../../lib/i18n';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
+
+  // Загружаем профиль из БД
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
+
+  // Local state для настроек
   const [theme, setTheme] = useState('light');
   const [useBrowserVoices, setUseBrowserVoices] = useState(true);
   const [speechRate, setSpeechRate] = useState(1.0);
+  const [targetLanguage, setTargetLanguage] = useState('fi');
+
+  // Modals
+  const [showAppLanguagePicker, setShowAppLanguagePicker] = useState(false);
+  const [showTargetLanguagePicker, setShowTargetLanguagePicker] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    type: 'success',
+    title: '',
+    message: '',
+  });
+
   const appLanguage = i18n.language;
-  const targetLanguage = 'fi'; // TODO Убрали setState (пока хардкод)
+
+  // Синхронизируем state с профилем из БД
+  useEffect(() => {
+    if (profile) {
+      setTheme(profile.theme || 'light');
+      setUseBrowserVoices(profile.voice_provider === 'browser');
+      setSpeechRate(profile.speech_rate || 1.0);
+      setTargetLanguage(profile.target_language || 'fi');
+    }
+  }, [profile]);
 
   const handleDone = () => {
-    // TODO: Save settings
-    console.log('Settings saved');
+    // Сохраняем все настройки в БД
+    updateProfile(
+      {
+        theme: theme,
+        voice_provider: useBrowserVoices ? 'browser' : 'elevenlabs',
+        speech_rate: speechRate,
+        target_language: targetLanguage,
+        ui_language: appLanguage,
+      },
+      {
+        onSuccess: () => {
+          setAlertConfig({
+            visible: true,
+            type: 'success',
+            title: t('settings.success'),
+            message: t('settings.settingsSaved'),
+          });
+        },
+        onError: (error) => {
+          console.error('Failed to save settings:', error);
+          setAlertConfig({
+            visible: true,
+            type: 'error',
+            title: t('settings.error'),
+            message: t('settings.settingsSaveFailed'),
+          });
+        },
+      },
+    );
   };
 
   const handleTest = () => {
-    // TODO: Test voice
+    // TODO: Test voice (будет в Phase 3)
     console.log('Testing voice...');
+    Alert.alert('Test Voice', 'Voice testing will be available in Phase 3');
+  };
+
+  const handleAppLanguageChange = async (langCode) => {
+    await i18n.changeLanguage(langCode);
+    await saveLanguage(langCode);
+  };
+
+  const handleTargetLanguageChange = (langCode) => {
+    setTargetLanguage(langCode);
+  };
+
+  // Показываем загрузку пока профиль грузится
+  if (profileLoading) {
+    return (
+      <View className='flex-1 bg-bgMain justify-center items-center'>
+        <ActivityIndicator size='large' color='hsl(130, 40%, 50%)' />
+        <Text className='text-textText mt-4' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+          {t('settings.loading')}
+        </Text>
+      </View>
+    );
+  }
+
+  const getTargetLanguageDisplay = (code) => {
+    const languages = {
+      fi: '🇫🇮 Finnish (Suomi)',
+      en: '🇬🇧 English',
+      es: '🇪🇸 Spanish (Español)',
+      de: '🇩🇪 German (Deutsch)',
+      fr: '🇫🇷 French (Français)',
+      it: '🇮🇹 Italian (Italiano)',
+      pt: '🇵🇹 Portuguese (Português)',
+      se: '🇸🇪 Swedish (Svenska)',
+      no: '🇳🇴 Norwegian (Norsk)',
+    };
+    return languages[code] || code.toUpperCase();
   };
 
   return (
@@ -93,9 +189,12 @@ export default function SettingsScreen() {
           <Text className='text-sm text-textHead mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
             {t('settings.appLanguage')}
           </Text>
-          <Pressable className='bg-bgCard border border-brdLight rounded-2xl px-4 py-4 flex-row items-center justify-between'>
+          <Pressable
+            onPress={() => setShowAppLanguagePicker(true)}
+            className='bg-bgCard border border-brdLight rounded-full px-8 py-3 flex-row items-center justify-between active:bg-bgSide'
+          >
             <Text className='text-base text-textHead' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-              {appLanguage === 'en' ? 'English' : 'Русский'}
+              {appLanguage === 'en' ? '🇬🇧 English' : '🇷🇺 Русский'}
             </Text>
             <Ionicons name='chevron-down' size={20} color='hsl(29, 10%, 55%)' />
           </Pressable>
@@ -106,9 +205,12 @@ export default function SettingsScreen() {
           <Text className='text-sm text-textHead mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
             {t('settings.targetLanguage')}
           </Text>
-          <Pressable className='bg-bgCard border border-brdLight rounded-2xl px-4 py-4 flex-row items-center justify-between'>
+          <Pressable
+            onPress={() => setShowTargetLanguagePicker(true)}
+            className='bg-bgCard border border-brdLight rounded-full px-8 py-3 flex-row items-center justify-between active:bg-bgSide'
+          >
             <Text className='text-base text-textHead' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-              {targetLanguage === 'fi' ? 'Suomi' : targetLanguage.toUpperCase()}
+              {getTargetLanguageDisplay(targetLanguage)}
             </Text>
             <Ionicons name='chevron-down' size={20} color='hsl(29, 10%, 55%)' />
           </Pressable>
@@ -142,7 +244,7 @@ export default function SettingsScreen() {
           </Text>
           <Pressable
             disabled={useBrowserVoices}
-            className={`border border-brdLight rounded-2xl px-4 py-4 flex-row items-center justify-between ${
+            className={`border border-brdLight rounded-full px-8 py-3 flex-row items-center justify-between ${
               useBrowserVoices ? 'bg-bgSide' : 'bg-bgCard'
             }`}
           >
@@ -176,8 +278,8 @@ export default function SettingsScreen() {
           <Slider
             value={speechRate}
             onValueChange={setSpeechRate}
-            minimumValue={0.5}
-            maximumValue={2.0}
+            minimumValue={0.75}
+            maximumValue={1.25}
             step={0.05}
             minimumTrackTintColor='hsl(130, 40%, 50%)'
             maximumTrackTintColor='hsl(36, 20%, 80%)'
@@ -186,7 +288,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Pre-listening + Test Button */}
-        <View className='flex-row items-center justify-between mb-8'>
+        <View className='flex-row items-center justify-between mb-12'>
           <Text className='text-base text-textHead' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
             {t('settings.preListening')}
           </Text>
@@ -203,15 +305,48 @@ export default function SettingsScreen() {
         </View>
 
         {/* Done Button */}
-        <Pressable onPress={handleDone} className='bg-bgCard border border-brdLight rounded-2xl py-4 items-center'>
+        <Pressable
+          onPress={handleDone}
+          className='bg-bgCard border border-brdLight rounded-full py-4 items-center'
+          disabled={isSaving}
+        >
           <View className='flex-row items-center'>
-            <Ionicons name='checkmark' size={20} color='hsl(32, 19%, 15%)' />
+            {isSaving ? (
+              <ActivityIndicator size='small' color='hsl(32, 19%, 15%)' />
+            ) : (
+              <Ionicons name='checkmark' size={20} color='hsl(32, 19%, 15%)' />
+            )}
             <Text className='text-textHead ml-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-              {t('settings.done')}
+              {isSaving ? t('settings.saving') : t('settings.done')}
             </Text>
           </View>
         </Pressable>
       </ScrollView>
+
+      {/* Modals */}
+      <LanguagePickerModal
+        visible={showAppLanguagePicker}
+        type='app'
+        currentLanguage={appLanguage}
+        onSelect={handleAppLanguageChange}
+        onClose={() => setShowAppLanguagePicker(false)}
+      />
+
+      <LanguagePickerModal
+        visible={showTargetLanguagePicker}
+        type='target'
+        currentLanguage={targetLanguage}
+        onSelect={handleTargetLanguageChange}
+        onClose={() => setShowTargetLanguagePicker(false)}
+      />
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }
