@@ -3,13 +3,15 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { saveLanguage } from '../lib/i18n';
 
 export default function Welcome() {
   const { t, i18n } = useTranslation();
   const { session, loading } = useSupabase();
 
-  const changeLanguage = (lang) => {
-    i18n.changeLanguage(lang);
+  const changeLanguage = async (lang) => {
+    await i18n.changeLanguage(lang);
+    await saveLanguage(lang); // Сохраняем выбор языка в AsyncStorage
   };
 
   const currentLang = i18n.language;
@@ -21,14 +23,14 @@ export default function Welcome() {
     }
   }, [session, loading]);
 
+  // Показываем loading пока проверяем session
   if (loading) {
-    return (
-      <View className='flex-1 bg-bgMain justify-center items-center'>
-        <Text className='text-lg text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-          Loading...
-        </Text>
-      </View>
-    );
+    return null; // TODO можно показать splash screen
+  }
+
+  // Если есть session - не рендерим, сразу редирект
+  if (session) {
+    return null;
   }
 
   return (
@@ -56,7 +58,7 @@ export default function Welcome() {
         </Text>
       </View>
 
-      {/* Language Toggle - Улучшенный дизайн */}
+      {/* Language Toggle */}
       <View className='w-full bg-bgCard rounded-full p-1 mb-6 border border-brdLight'>
         <View className='flex-row'>
           <Pressable
@@ -113,7 +115,7 @@ export default function Welcome() {
 
       {/* Start Button */}
       <Pressable
-        onPress={() => router.push('/(auth)/login')}
+        onPress={() => router.push('/language-selection')}
         className='bg-greenDefault w-full py-4 rounded-full items-center active:bg-greenDark'
       >
         <Text className='text-white text-lg' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>

@@ -11,13 +11,29 @@
     },
     "button": "Start"
   },
+  "languageSelection": {
+    "title": "Choose Your Language",
+    "subtitle": "What language do you want to learn?",
+    "languages": {
+      "fi": "Finnish (Suomi)",
+      "en": "English",
+      "es": "Spanish (Español)",
+      "de": "German (Deutsch)",
+      "fr": "French (Français)",
+      "it": "Italian (Italiano)",
+      "pt": "Portuguese (Português)",
+      "se": "Swedish (Svenska)",
+      "no": "Norwegian (Norsk)"
+    },
+    "continue": "Continue"
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "email": "Email",
-    "emailPlaceholder": "Enter your email",
+    "emailPlaceholder": "Your email",
     "password": "Password",
-    "passwordPlaceholder": "Enter your password",
+    "passwordPlaceholder": "••••••••",
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot password?",
     "or": "OR",
@@ -30,6 +46,11 @@
     "backToLogin": "Back",
     "success": "Check your email!",
     "successMessage": "We've sent a password reset link to your email."
+  },
+  "emptyState": {
+    "title": "No dialogs yet",
+    "description": "Start your language journey by creating your first conversation.",
+    "button": "Create your first dialog"
   },
   "main": {
     "title": "Lingua Flow",

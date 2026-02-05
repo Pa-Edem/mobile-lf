@@ -1,6 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import i18n from '../lib/i18n';
 import { supabase } from '../lib/supabase';
+
+const TARGET_LANGUAGE_KEY = '@lingua_flow:target_language';
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
@@ -29,20 +33,36 @@ export function useAuth() {
   const signUp = async (email, password) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Регистрация в Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: {
-          emailRedirectTo: undefined, // Отключаем email verification для тестирования
-        },
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      // После регистрации сразу входим
+      // 2. Получаем сохраненный target language
+      const targetLanguage = (await AsyncStorage.getItem(TARGET_LANGUAGE_KEY)) || 'fi';
+      const uiLanguage = i18n.language || 'en';
+
+      // 3. Создаем профиль в БД
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user.id,
+        email: email.trim(),
+        ui_language: uiLanguage,
+        target_language: targetLanguage,
+        subscription_tier: 'free',
+      });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Не бросаем ошибку, т.к. auth уже создан
+      }
+
+      // 4. Переход на главную
       router.replace('/(tabs)');
 
-      return data;
+      return authData;
     } catch (error) {
       throw error;
     } finally {

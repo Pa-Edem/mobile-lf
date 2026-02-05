@@ -17,13 +17,14 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function AuthScreen() {
   const { t } = useTranslation();
-  const [mode, setMode] = useState('signIn'); // 'signIn' or 'signUp'
+  const { signIn, signUp, isLoading } = useAuth();
+
+  const [mode, setMode] = useState('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { signIn, signUp, isLoading } = useAuth();
 
   const isSignIn = mode === 'signIn';
 
