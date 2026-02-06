@@ -1,8 +1,9 @@
+// app/(tabs)/index.js
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
 function UsageLimitsCard({ usage, collapsed, onToggle }) {
@@ -338,7 +339,19 @@ export default function MainScreen() {
         <EmptyState onCreateDialog={handleCreateDialog} />
       ) : (
         // Dialogs List
-        <ScrollView className='flex-1' contentContainerClassName='px-6 pt-6 pb-8' showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className='flex-1'
+          contentContainerClassName='px-6 pt-6 pb-8'
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={loadData}
+              colors={['hsl(130, 40%, 50%)']}
+              tintColor='hsl(130, 40%, 50%)'
+            />
+          }
+        >
           {/* Usage Limits */}
           {usage && (
             <UsageLimitsCard
