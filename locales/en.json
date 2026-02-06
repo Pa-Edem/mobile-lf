@@ -37,7 +37,10 @@
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot password?",
     "or": "OR",
-    "continueWithGoogle": "Continue with Google"
+    "continueWithGoogle": "Continue with Google",
+    "error": "Error",
+    "enterEmail": "Please enter your email",
+    "invalidEmail": "Please enter a valid email address"
   },
   "forgotPassword": {
     "title": "Reset Password",
@@ -45,7 +48,9 @@
     "sendLink": "Send Reset Link",
     "backToLogin": "Back",
     "success": "Check your email!",
-    "successMessage": "We've sent a password reset link to your email."
+    "successMessage": "We've sent a password reset link to your email.",
+    "sending": "Sending...",
+    "resetError": "Failed to send reset email. Please try again."
   },
   "emptyState": {
     "title": "No dialogs yet",

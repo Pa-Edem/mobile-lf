@@ -37,9 +37,6 @@ export default function SplashScreen() {
 
         {/* Название */}
         <Text className='text-4xl font-robotoBold text-textHead mb-2'>Lingua Flow</Text>
-
-        {/* Подзаголовок */}
-        <Text className='text-base text-textText'>Learn languages naturally</Text>
       </Animated.View>
     </View>
   );

@@ -1,43 +1,66 @@
+// app/(auth)/forgot-password.js
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import CustomAlert from '../../components/CustomAlert';
+import { supabase } from '../../lib/supabase';
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    type: 'error',
+    title: '',
+    message: '',
+  });
 
   const handleResetPassword = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email');
+    // Валидация email
+    if (!email.trim()) {
+      setAlertConfig({
+        visible: true,
+        type: 'error',
+        title: t('auth.error'),
+        message: t('auth.enterEmail'),
+      });
+      return;
+    }
+
+    // Простая проверка формата email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAlertConfig({
+        visible: true,
+        type: 'error',
+        title: t('auth.error'),
+        message: t('auth.invalidEmail'),
+      });
       return;
     }
 
     setLoading(true);
 
     try {
-      // TODO: Реализовать reset password через Supabase
-      // const { error } = await supabase.auth.resetPasswordForEmail(email);
-      // if (error) throw error;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'linguaflow://reset-password', // Deep link для мобильного приложения
+      });
 
-      console.log('Reset password for:', email);
+      if (error) throw error;
 
       setSent(true);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      console.error('Reset password error:', error);
+      setAlertConfig({
+        visible: true,
+        type: 'error',
+        title: t('auth.error'),
+        message: error.message || t('forgotPassword.resetError'),
+      });
     } finally {
       setLoading(false);
     }
@@ -117,6 +140,7 @@ export default function ForgotPasswordScreen() {
             autoCorrect={false}
             className='bg-bgCard border border-brdLight rounded-full px-4 py-4 text-textHead mb-8'
             style={{ fontFamily: 'RobotoCondensed_400Regular' }}
+            editable={!loading}
           />
         </View>
 
@@ -129,10 +153,19 @@ export default function ForgotPasswordScreen() {
           }`}
         >
           <Text className='text-white text-lg' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-            {loading ? '...' : t('forgotPassword.sendLink')}
+            {loading ? t('forgotPassword.sending') : t('forgotPassword.sendLink')}
           </Text>
         </Pressable>
       </ScrollView>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </KeyboardAvoidingView>
   );
 }

@@ -37,7 +37,10 @@
     "confirmPassword": "Подтвердите пароль",
     "forgotPassword": "Забыли пароль?",
     "or": "ИЛИ",
-    "continueWithGoogle": "Продолжить с Google"
+    "continueWithGoogle": "Продолжить с Google",
+    "error": "Ошибка",
+    "enterEmail": "Пожалуйста, введите email",
+    "invalidEmail": "Пожалуйста, введите корректный email"
   },
   "forgotPassword": {
     "title": "Восстановление пароля",
@@ -45,7 +48,9 @@
     "sendLink": "Отправить ссылку",
     "backToLogin": "Назад",
     "success": "Проверьте почту!",
-    "successMessage": "Мы отправили ссылку для сброса пароля на вашу почту."
+    "successMessage": "Мы отправили ссылку для сброса пароля на вашу почту.",
+    "sending": "Отправка...",
+    "resetError": "Не удалось отправить письмо. Попробуйте снова."
   },
   "emptyState": {
     "title": "Пока нет диалогов",
