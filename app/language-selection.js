@@ -58,7 +58,7 @@ export default function LanguageSelectionScreen() {
       <ScrollView className='flex-1' contentContainerClassName='px-6 pt-12 pb-8' showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View className='items-center mb-8'>
-          <Image source={require('../assets/images/logo.png')} className='w-20 h-20 mb-3' resizeMode='contain' />
+          <Image source={require('../assets/images/logo.png')} className='w-16 h-16 mb-2' resizeMode='contain' />
           <Text className='text-2xl text-textHead mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
             {t('languageSelection.title')}
           </Text>
@@ -68,12 +68,12 @@ export default function LanguageSelectionScreen() {
         </View>
 
         {/* Language Grid */}
-        <View className='gap-3 mb-8'>
+        <View className='gap-2 mb-8'>
           {LANGUAGES.map((lang) => (
             <Pressable
               key={lang.code}
               onPress={() => setSelectedLanguage(lang.code)}
-              className={`flex-row items-center justify-between p-4 rounded-2xl border ${
+              className={`flex-row items-center justify-between px-4 py-3 rounded-2xl border ${
                 selectedLanguage === lang.code ? 'bg-greenLight border-greenDefault' : 'bg-bgCard border-brdLight'
               }`}
             >

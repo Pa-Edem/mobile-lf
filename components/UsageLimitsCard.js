@@ -8,7 +8,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
   const getPercentage = (used, total) => (used / total) * 100;
 
   return (
-    <View className={`bg-bgCard rounded-3xl p-4 border border-brdLight ${collapsed ? 'mb-4' : 'mb-6'}`}>
+    <View className={`bg-bgSide rounded-3xl p-4 border border-brdLight ${collapsed ? 'mb-4' : 'mb-6'}`}>
       {/* Header */}
       <View className='flex-row items-center justify-between'>
         <View className='flex-row items-center'>
@@ -30,7 +30,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
         <View className='mt-4'>
           {/* Generations */}
           <View className='mb-4'>
-            <View className='flex-row justify-between mb-2'>
+            <View className='flex-row justify-between mb-1'>
               <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.generations')}
               </Text>
@@ -48,7 +48,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
 
           {/* PRO Features */}
           <View className='mb-4'>
-            <View className='flex-row justify-between mb-2'>
+            <View className='flex-row justify-between mb-1'>
               <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.proFeatures')}
               </Text>
@@ -66,7 +66,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
 
           {/* Saved Dialogs */}
           <View>
-            <View className='flex-row justify-between mb-2'>
+            <View className='flex-row justify-between mb-1'>
               <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.savedDialogs')}
               </Text>

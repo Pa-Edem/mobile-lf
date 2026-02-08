@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 
 export default function EmptyState({ onCreateDialog }) {
   const { t } = useTranslation();
@@ -9,18 +9,8 @@ export default function EmptyState({ onCreateDialog }) {
     <View className='flex-1 items-center justify-center px-6 py-12'>
       {/* Icon with gradient circle */}
       <View className='items-center justify-center mb-8'>
-        <View
-          className='w-48 h-48 rounded-full items-center justify-center'
-          style={{
-            backgroundColor: 'hsla(130, 40%, 50%, 0.1)',
-            borderWidth: 2,
-            borderColor: 'hsla(130, 40%, 50%, 0.2)',
-            borderStyle: 'dashed',
-          }}
-        >
-          <View className='w-32 h-32 bg-greenDefault rounded-2xl items-center justify-center'>
-            <Ionicons name='chatbubbles' size={64} color='white' />
-          </View>
+        <View className='items-center justify-center'>
+          <Image source={require('../assets/images/logo.png')} className='w-32 h-32' resizeMode='contain' />
         </View>
       </View>
 

@@ -8,19 +8,19 @@ module.exports = {
       colors: {
         // Primary - зелёный акцент
         greenDefault: 'hsl(130, 40%, 50%)', // основной зелёный
-        greenLight: 'hsl(130, 70%, 70%)', // светлый зелёный
-        greenDark: 'hsl(130, 50%, 40%)', // тёмный зелёный
+        greenLight: '#7de88f', // светлый зелёный
+        greenDark: '#339944', // тёмный зелёный
         // Backgrounds
-        bgMain: 'hsl(36, 33%, 97%)', // светло-бежевый
+        bgMain: '#faf8f5', // светло-бежевый
         bgSide: 'hsl(33, 26%, 93%)', // бежевый для карточек
         bgCard: 'hsl(32, 25%, 88%)', // средний бежевый
         // Text
-        textHead: 'hsl(32, 19%, 15%)', // тёмно-коричневый
-        textTitle: 'hsl(34, 16%, 30%)', // коричневый
+        textHead: '#2e271f', // тёмно-коричневый
+        textTitle: '#594e40', // коричневый
         textText: 'hsl(29, 10%, 55%)', // средний коричневый
-        textDis: 'hsl(36, 20%, 80%)', // светлый
+        textDis: '#d6cec2', // светлый
         // Borders
-        brd: 'hsl(30, 10%, 40%)', // основная граница
+        brd: '#70665c', // основная граница
         brdLight: 'hsl(36, 20%, 80%)', // светлая граница
         divider: 'hsl(30, 20%, 70%)', // разделитель
         // Tier colors
@@ -30,12 +30,12 @@ module.exports = {
         tierTrial: 'hsl(210, 70%, 50%)', // голубой
         // Semantic colors
         success: 'hsl(130, 45%, 50%)', // зелёный
-        warning: 'hsl(45, 100%, 75%)', // жёлтый
+        warning: '#ffdf80', // жёлтый
         error: 'hsl(5, 80%, 70%)', // красный
         info: 'hsl(210, 70%, 50%)', // голубой
         /* Белые/светлые для чатов */
-        chatLeft: 'hsl(200, 75%, 95%)' /* Голубоватый белый */,
-        chatRight: 'hsl(60, 85%, 95%)' /* Желтоватый белый */,
+        chatLeft: '#e9f5fc' /* Голубоватый белый */,
+        chatRight: '#fdfde7' /* Желтоватый белый */,
       },
       fontFamily: {
         roboto: ['RobotoCondensed_400Regular'],

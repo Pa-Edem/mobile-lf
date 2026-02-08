@@ -1,3 +1,4 @@
+// contexts/SupabaseContext.js
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -8,17 +9,65 @@ export function SupabaseProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    // Функция валидации сессии
+    const validateSession = async (currentSession) => {
+      if (!currentSession) return false;
 
-    // Listen for auth changes
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', currentSession.user.id)
+          .maybeSingle();
+
+        if (error || !profile) {
+          console.warn('Profile not found in DB, logging out...');
+          await supabase.auth.signOut();
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.error('Validation error:', err);
+        return false;
+      }
+    };
+
+    // Инициализация при запуске
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
+
+        if (initialSession) {
+          const isValid = await validateSession(initialSession);
+          setSession(isValid ? initialSession : null);
+        } else {
+          setSession(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Запускаем инициализацию
+    initializeAuth();
+
+    // Подписываемся на изменения auth состояния
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log('Auth event:', event);
+
+      if (currentSession) {
+        const isValid = await validateSession(currentSession);
+        setSession(isValid ? currentSession : null);
+      } else {
+        setSession(null);
+      }
+
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

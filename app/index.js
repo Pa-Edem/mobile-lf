@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
-import SplashScreen from '../components/SplashScreen';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { saveLanguage } from '../lib/i18n';
 
@@ -19,38 +18,19 @@ export default function Welcome() {
 
   const currentLang = i18n.language;
 
-  // Auto-redirect если уже залогинен
-  useEffect(() => {
-    if (!loading && session) {
-      // Небольшая задержка для показа анимации Splash
-      setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 800); // Синхронизировано с анимацией (800ms)
-    }
-  }, [session, loading]);
-
-  // Управление показом Splash Screen
+  // Управляем только визуальным состоянием Splash Screen
   useEffect(() => {
     if (!loading) {
-      // Если нет session → показываем Welcome через 1.2 сек
-      if (!session) {
-        setTimeout(() => {
-          setShowSplash(false);
-        }, 1200);
-      }
-      // Если есть session → Splash скроется автоматически при редиректе
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [loading, session]);
+  }, [loading]);
 
-  // Показываем Splash Screen пока loading или первые 1.2 сек
-  if (loading || showSplash) {
-    return <SplashScreen />;
-  }
-
-  // Если есть session - не рендерим (произойдёт редирект)
-  if (session) {
-    return null;
-  }
+  // Пока идет инициализация или анимация splash — не показываем контент
+  if (loading || showSplash) return null;
+  if (session) return null;
 
   return (
     <View className='flex-1 bg-bgMain px-6 justify-center items-center'>
@@ -77,58 +57,25 @@ export default function Welcome() {
         </Text>
       </View>
 
-      {/* Language Toggle */}
+      {/* Переключатель языка остается здесь */}
       <View className='w-full bg-bgCard rounded-full p-1 mb-6 border border-brdLight'>
         <View className='flex-row'>
-          <Pressable
-            onPress={() => changeLanguage('en')}
-            className={`flex-1 py-3 rounded-full items-center justify-center ${
-              currentLang === 'en' ? 'bg-bgMain' : 'bg-transparent'
-            }`}
-            style={
-              currentLang === 'en'
-                ? {
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }
-                : {}
-            }
-          >
-            <Text
-              className={`text-sm ${currentLang === 'en' ? 'text-textHead' : 'text-textText'}`}
-              style={{ fontFamily: 'RobotoCondensed_700Bold' }}
+          {['en', 'ru'].map((lang) => (
+            <Pressable
+              key={lang}
+              onPress={() => changeLanguage(lang)}
+              className={`flex-1 py-3 rounded-full items-center justify-center ${
+                currentLang === lang ? 'bg-bgMain' : 'bg-transparent'
+              }`}
             >
-              {t('welcome.language.en')}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => changeLanguage('ru')}
-            className={`flex-1 py-3 rounded-full items-center justify-center ${
-              currentLang === 'ru' ? 'bg-bgMain' : 'bg-transparent'
-            }`}
-            style={
-              currentLang === 'ru'
-                ? {
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }
-                : {}
-            }
-          >
-            <Text
-              className={`text-sm ${currentLang === 'ru' ? 'text-textHead' : 'text-textText'}`}
-              style={{ fontFamily: 'RobotoCondensed_700Bold' }}
-            >
-              {t('welcome.language.ru')}
-            </Text>
-          </Pressable>
+              <Text
+                className={`text-sm ${currentLang === lang ? 'text-textHead' : 'text-textText'}`}
+                style={{ fontFamily: 'RobotoCondensed_700Bold' }}
+              >
+                {t(`welcome.language.${lang}`)}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </View>
 

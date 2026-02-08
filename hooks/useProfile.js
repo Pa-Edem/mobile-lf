@@ -1,3 +1,4 @@
+// hooks/useProfile.js
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
@@ -9,14 +10,16 @@ export function useProfile() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) throw new Error('No user found');
+      if (!user) return null;
 
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
-      if (error) throw error;
+      if (error) {
+        return null;
+      }
       return data;
     },
-    // Кэшируем профиль на 5 минут
+    enabled: true, // Запрос будет работать только если есть Auth-юзер
     staleTime: 5 * 60 * 1000,
   });
 }

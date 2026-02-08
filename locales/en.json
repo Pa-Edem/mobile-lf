@@ -60,8 +60,6 @@
   "main": {
     "title": "Lingua Flow",
     "usageLimits": "USAGE LIMITS",
-    "collapse": "COLLAPSE",
-    "expand": "EXPAND",
     "generations": "GENERATIONS",
     "proFeatures": "PRO FEATURES",
     "savedDialogs": "SAVED DIALOGS",
@@ -100,5 +98,14 @@
   },
   "common": {
     "comingSoon": "Coming Soon"
+  },
+  "upgrade": {
+    "title": "Upgrade to PRO",
+    "message": "You've reached your daily limit. Upgrade to PRO for more generations!",
+    "feature1": "10 generations per day",
+    "feature2": "All levels A1-C2",
+    "feature3": "Premium voice quality",
+    "upgradeButton": "Upgrade Now",
+    "later": "Maybe Later"
   }
 }

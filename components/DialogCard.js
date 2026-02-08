@@ -9,7 +9,7 @@ export default function DialogCard({ dialog, onPress }) {
   const trainingStatus = {
     level2: false, // TODO: проверять из training_logs
     level3: false,
-    level4: false,
+    level4: true, // Для демонстрации пусть будет пройдено
   };
 
   return (

@@ -1,3 +1,4 @@
+// app/(tabs)/_layout.js
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -9,14 +10,14 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: 'hsl(130, 40%, 50%)', // greenDefault
-        tabBarInactiveTintColor: 'hsl(29, 10%, 55%)', // textText
+        tabBarActiveTintColor: 'hsl(130, 40%, 50%)',
+        tabBarInactiveTintColor: 'hsl(29, 10%, 55%)',
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'hsl(36, 33%, 97%)', // bgMain
-          borderTopColor: 'hsl(36, 20%, 80%)', // brdLight
+          backgroundColor: 'hsl(36, 33%, 97%)',
+          borderTopColor: 'hsl(36, 20%, 80%)',
           borderTopWidth: 1,
-          height: 80, // Высота таб-бара
+          height: 80,
           paddingBottom: 12,
           paddingTop: 6,
         },

@@ -1,12 +1,15 @@
 // app/(tabs)/index.js
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import DialogCard from '../../components/DialogCard';
 import EmptyState from '../../components/EmptyState';
+import UpgradeModal from '../../components/UpgradeModal';
 import UsageLimitsCard from '../../components/UsageLimitsCard';
+import { canGenerateDialog, getEffectivePlan, getPlanLimits } from '../../lib/planUtils';
 import { supabase } from '../../lib/supabase';
 
 // Группируем диалоги по уровням (A2.1 + A2.2 = A2)
@@ -32,12 +35,11 @@ export default function MainScreen() {
   const [dialogs, setDialogs] = useState([]);
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [canGenerate, setCanGenerate] = useState(true);
+  const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+  const [upgradeModalShown, setUpgradeModalShown] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -47,7 +49,6 @@ export default function MainScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace('/');
         return;
       }
 
@@ -68,28 +69,38 @@ export default function MainScreen() {
         .single();
 
       if (usageError && usageError.code !== 'PGRST116') {
-        // PGRST116 = no rows, это ок для нового пользователя
         throw usageError;
       }
 
-      // Получаем профиль для определения лимитов
+      // Получаем профиль
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('subscription_tier, is_trial_active')
+        .select('subscription_tier, is_trial_active, manual_pro, manual_premium')
         .eq('id', user.id)
         .single();
 
-      // Определяем лимиты по плану
-      const plan = profileData?.is_trial_active ? 'pro' : profileData?.subscription_tier || 'free';
+      // Определяем эффективный план и его лимиты
+      const plan = getEffectivePlan(profileData);
+      const planLimits = getPlanLimits(plan);
 
-      const limits = {
-        free: { generations: 4, proFeatures: 8, dialogs: 4 },
-        pro: { generations: 10, proFeatures: 20, dialogs: 10 },
-        premium: { generations: 20, proFeatures: 999, dialogs: 50 },
-      };
+      // Проверяем возможность генерации
+      const canGen = canGenerateDialog(usageData, profileData);
+      setCanGenerate(canGen);
 
-      const planLimits = limits[plan];
+      // Если не может генерировать и модалка ещё не показывалась - сбросим флаг
+      if (canGen) {
+        setUpgradeModalShown(false);
+      }
 
+      // DEBUG: Логируем для отладки
+      console.log('=== LOAD DATA DEBUG ===');
+      console.log('canGenerate:', canGen);
+      console.log('daily_generations_used:', usageData?.daily_generations_used);
+      console.log('plan:', plan);
+      console.log('planLimits:', planLimits);
+      console.log('=======================');
+
+      // Устанавливаем лимиты для UI
       setUsage({
         generations: {
           used: usageData?.daily_generations_used || 0,
@@ -108,20 +119,47 @@ export default function MainScreen() {
       setDialogs(dialogsData || []);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load data');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Автоматически загружаем данные при возврате на экран
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData]),
+  );
 
   const handleCreateDialog = () => {
-    // TODO: Navigate to create dialog screen
-    Alert.alert('Info', 'Create Dialog - Coming in Phase 2');
+    // Если не может генерировать
+    if (!canGenerate) {
+      // Если модалка УЖЕ показывалась - ничего не делаем
+      if (upgradeModalShown) {
+        return;
+      }
+
+      // Показываем модалку первый раз
+      setUpgradeModalVisible(true);
+      return;
+    }
+
+    // Может генерировать - открываем форму
+    router.push('/dialogs/new');
+  };
+
+  const handleUpgradeModalClose = () => {
+    setUpgradeModalVisible(false);
+    setUpgradeModalShown(true); // Помечаем что модалка показана
+  };
+
+  const handleUpgrade = () => {
+    setUpgradeModalVisible(false);
+    router.push('/pricing'); // TODO: создать в Phase 4 страницу с преимуществами Pro и Premium
   };
 
   const handleDialogPress = (dialogId) => {
-    // TODO: Navigate to view dialog screen
-    Alert.alert('Info', `Opening dialog ${dialogId} - Coming in Phase 2`);
+    router.push(`/dialogs/${dialogId}`);
   };
 
   if (loading) {
@@ -148,9 +186,13 @@ export default function MainScreen() {
             </Text>
           </View>
 
+          {/* Create Button - меняет цвет в зависимости от canGenerate */}
           <Pressable
             onPress={handleCreateDialog}
-            className='w-12 h-12 bg-greenDefault rounded-full items-center justify-center'
+            disabled={!canGenerate && upgradeModalShown}
+            className={`w-12 h-12 rounded-full items-center justify-center ${
+              !canGenerate && upgradeModalShown ? 'bg-textDis' : 'bg-greenDefault active:bg-greenDark'
+            }`}
           >
             <Ionicons name='add' size={28} color='white' />
           </Pressable>
@@ -206,6 +248,9 @@ export default function MainScreen() {
           </Text>
         </ScrollView>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal visible={upgradeModalVisible} onClose={handleUpgradeModalClose} onUpgrade={handleUpgrade} />
     </View>
   );
 }
