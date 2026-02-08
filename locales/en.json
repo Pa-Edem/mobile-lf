@@ -66,6 +66,26 @@
     "lines": "lines",
     "endOfDialogs": "END OF RECENT DIALOGS"
   },
+  "createDialog": {
+    "title": "Create New Dialog",
+    "topic": "Topic",
+    "topicPlaceholder": "e.g., At the cafe, Job interview",
+    "topicRequired": "Topic is required",
+    "words": "Required Words (optional)",
+    "wordsPlaceholder": "Add a word",
+    "level": "Level",
+    "tone": "Tone",
+    "toneCasual": "Casual",
+    "toneNeutral": "Neutral",
+    "toneFormal": "Formal",
+    "replicas": "Number of Replicas",
+    "generateButton": "Generate Dialog",
+    "generating": "Generating...",
+    "limits": "Generations remaining",
+    "success": "Dialog created successfully!",
+    "error": "Failed to generate dialog. Please try again.",
+    "quotaExceeded": "Daily limit reached. Please upgrade or try again tomorrow."
+  },
   "settings": {
     "title": "Settings",
     "appearance": "APPEARANCE",

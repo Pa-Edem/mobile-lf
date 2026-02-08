@@ -20,9 +20,7 @@ export function useAuth() {
 
       if (error) throw error;
 
-      // Успешный вход - переход на главную
       router.replace('/(tabs)');
-
       return data;
     } catch (error) {
       throw error;
@@ -34,36 +32,25 @@ export function useAuth() {
   const signUp = async (email, password) => {
     setLoading(true);
     try {
-      // 1. Регистрация в Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      });
-
-      if (authError) throw authError;
-
-      // 2. Получаем сохраненный target language
       const targetLanguage = (await AsyncStorage.getItem(TARGET_LANGUAGE_KEY)) || 'fi';
       const uiLanguage = i18n.language || 'en';
 
-      // 3. Создаем профиль в БД
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
-        ui_language: uiLanguage,
-        target_language: targetLanguage,
-        subscription_tier: 'free',
+        password,
+        options: {
+          data: {
+            ui_language: uiLanguage,
+            target_language: targetLanguage,
+          },
+        },
       });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // Не бросаем ошибку, т.к. auth уже создан
-      }
+      if (error) throw error;
 
-      // 4. Переход на главную
       router.replace('/(tabs)');
 
-      return authData;
+      return data;
     } catch (error) {
       throw error;
     } finally {

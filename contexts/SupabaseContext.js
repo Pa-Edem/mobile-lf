@@ -9,24 +9,35 @@ export function SupabaseProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Функция валидации сессии
     const validateSession = async (currentSession) => {
       if (!currentSession) return false;
 
       try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', currentSession.user.id)
-          .maybeSingle();
+        // Проверяем профиль с небольшим retry
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        if (error || !profile) {
-          console.warn('Profile not found in DB, logging out...');
-          await supabase.auth.signOut();
-          return false;
+        while (attempts < maxAttempts) {
+          attempts++;
+
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', currentSession.user.id)
+            .maybeSingle();
+
+          if (profile) return true;
+
+          // Ждём перед следующей попыткой
+          if (attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
         }
 
-        return true;
+        // Профиль не найден даже после retry
+        console.warn('Profile not found, logging out');
+        await supabase.auth.signOut();
+        return false;
       } catch (err) {
         console.error('Validation error:', err);
         return false;
@@ -58,15 +69,12 @@ export function SupabaseProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('Auth event:', event);
-
       if (currentSession) {
         const isValid = await validateSession(currentSession);
         setSession(isValid ? currentSession : null);
       } else {
         setSession(null);
       }
-
       setLoading(false);
     });
 
