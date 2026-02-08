@@ -69,7 +69,7 @@
   "createDialog": {
     "title": "Создать новый диалог",
     "topic": "Тема",
-    "topicPlaceholder": "например, В кафе, Собеседование",
+    "topicPlaceholder": "Например: В кафе",
     "topicRequired": "Тема обязательна",
     "words": "Обязательные слова (опционально)",
     "wordsPlaceholder": "Добавить слово",

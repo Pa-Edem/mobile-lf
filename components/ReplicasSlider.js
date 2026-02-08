@@ -9,7 +9,7 @@ export default function ReplicasSlider({ value, onValueChange, disabled = false 
   return (
     <View>
       {/* Label with value */}
-      <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+      <Text className='text-sm text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
         {t('createDialog.replicas')}: <Text style={{ fontFamily: 'RobotoCondensed_700Bold' }}>{value}</Text>
       </Text>
 
@@ -28,10 +28,10 @@ export default function ReplicasSlider({ value, onValueChange, disabled = false 
 
       {/* Range labels */}
       <View className='flex-row justify-between'>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           6
         </Text>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           20
         </Text>
       </View>

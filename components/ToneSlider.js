@@ -15,7 +15,7 @@ export default function ToneSlider({ value, onValueChange, disabled = false }) {
   return (
     <View>
       {/* Label with value */}
-      <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+      <Text className='text-sm text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
         {t('createDialog.tone')}: <Text style={{ fontFamily: 'RobotoCondensed_700Bold' }}>{value}</Text> (
         {getToneLabel(value)})
       </Text>
@@ -35,10 +35,10 @@ export default function ToneSlider({ value, onValueChange, disabled = false }) {
 
       {/* Range labels */}
       <View className='flex-row justify-between'>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           {t('createDialog.toneCasual')}
         </Text>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           {t('createDialog.toneFormal')}
         </Text>
       </View>

@@ -1,7 +1,7 @@
 // app/dialogs/new.js
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -17,9 +17,8 @@ import {
 import LevelSlider from '../../components/LevelSlider';
 import ReplicasSlider from '../../components/ReplicasSlider';
 import ToneSlider from '../../components/ToneSlider';
-import UsageLimitsCard from '../../components/UsageLimitsCard';
 import WordsInput from '../../components/WordsInput';
-import { canGenerateDialog, getEffectivePlan, getPlanLimits } from '../../lib/planUtils';
+import { canGenerateDialog } from '../../lib/planUtils';
 import { supabase } from '../../lib/supabase';
 
 export default function CreateDialogScreen() {
@@ -34,53 +33,6 @@ export default function CreateDialogScreen() {
 
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [usage, setUsage] = useState(null);
-  const [limitsCollapsed, setLimitsCollapsed] = useState(false);
-
-  // Load usage on mount
-  useEffect(() => {
-    loadUsage();
-  }, []);
-
-  const loadUsage = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      // Загружаем usage counters
-      const { data: usageData } = await supabase.from('usage_counters').select('*').eq('user_id', user.id).single();
-
-      // Загружаем профиль для определения плана
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('subscription_tier, is_trial_active, manual_pro, manual_premium')
-        .eq('id', user.id)
-        .single();
-
-      const plan = getEffectivePlan(profileData);
-      const planLimits = getPlanLimits(plan);
-
-      setUsage({
-        generations: {
-          used: usageData?.daily_generations_used || 0,
-          total: planLimits.generations,
-        },
-        proFeatures: {
-          used: usageData?.daily_pro_features_used || 0,
-          total: planLimits.proFeatures,
-        },
-        savedDialogs: {
-          used: usageData?.total_dialogs_count || 0,
-          total: planLimits.dialogs,
-        },
-      });
-    } catch (error) {
-      console.error('Error loading usage:', error);
-    }
-  };
 
   const handleGenerate = async () => {
     // Validation
@@ -180,32 +132,23 @@ export default function CreateDialogScreen() {
 
       {/* Form */}
       <ScrollView className='flex-1' contentContainerClassName='px-6 py-6' showsVerticalScrollIndicator={false}>
-        {/* Usage Limits */}
-        {usage && (
-          <UsageLimitsCard
-            usage={usage}
-            collapsed={limitsCollapsed}
-            onToggle={() => setLimitsCollapsed(!limitsCollapsed)}
-          />
-        )}
-
         {/* Topic */}
         <View className='mb-6'>
-          <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+          <Text className='text-sm text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
             {t('createDialog.topic')} *
           </Text>
           <TextInput
             value={topic}
             onChangeText={setTopic}
             placeholder={t('createDialog.topicPlaceholder')}
-            className='px-4 py-3 rounded-lg border border-brdLight bg-white text-textHead'
+            className='px-4 py-3 rounded-full border border-brdLight bg-white text-textHead'
             style={{ fontFamily: 'RobotoCondensed_400Regular' }}
           />
         </View>
 
         {/* Words */}
         <View className='mb-6'>
-          <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+          <Text className='text-sm text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
             {t('createDialog.words')}
           </Text>
           <WordsInput words={words} onWordsChange={setWords} disabled={isGenerating} />

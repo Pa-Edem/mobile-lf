@@ -69,7 +69,7 @@
   "createDialog": {
     "title": "Create New Dialog",
     "topic": "Topic",
-    "topicPlaceholder": "e.g., At the cafe, Job interview",
+    "topicPlaceholder": "E.g.: At the cafe",
     "topicRequired": "Topic is required",
     "words": "Required Words (optional)",
     "wordsPlaceholder": "Add a word",

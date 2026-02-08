@@ -21,7 +21,7 @@ export default function LevelSlider({ value, onValueChange, disabled = false }) 
   return (
     <View>
       {/* Label with value */}
-      <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+      <Text className='text-sm text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
         {t('createDialog.level')}: <Text style={{ fontFamily: 'RobotoCondensed_700Bold' }}>{value}</Text>
       </Text>
 
@@ -40,10 +40,10 @@ export default function LevelSlider({ value, onValueChange, disabled = false }) 
 
       {/* Range labels */}
       <View className='flex-row justify-between'>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           A1
         </Text>
-        <Text className='text-xs text-textDis' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+        <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
           C2
         </Text>
       </View>

@@ -23,14 +23,14 @@ export default function WordsInput({ words, onWordsChange, disabled = false }) {
   return (
     <View>
       {/* Input + Add Button */}
-      <View className='flex-row gap-2 mb-3'>
+      <View className='flex-row gap-2 mb-1'>
         <TextInput
           value={inputValue}
           onChangeText={setInputValue}
           onSubmitEditing={handleAdd}
           placeholder={t('createDialog.wordsPlaceholder')}
           editable={!disabled}
-          className={`flex-1 px-4 py-3 rounded-lg border ${
+          className={`flex-1 px-4 py-3 rounded-full border ${
             disabled ? 'bg-bgCard border-brdLight text-textDis' : 'bg-white border-brdLight text-textHead'
           }`}
           style={{ fontFamily: 'RobotoCondensed_400Regular' }}
@@ -38,7 +38,7 @@ export default function WordsInput({ words, onWordsChange, disabled = false }) {
         <Pressable
           onPress={handleAdd}
           disabled={disabled || !inputValue.trim()}
-          className={`w-12 h-12 rounded-lg items-center justify-center ${
+          className={`w-12 h-12 rounded-full items-center justify-center ${
             disabled || !inputValue.trim() ? 'bg-textDis' : 'bg-greenDefault active:bg-greenDark'
           }`}
         >
@@ -51,7 +51,7 @@ export default function WordsInput({ words, onWordsChange, disabled = false }) {
         <View className='flex-row flex-wrap gap-2'>
           {words.map((word, index) => (
             <View key={index} className='bg-greenLight px-3 py-2 rounded-full flex-row items-center gap-2'>
-              <Text className='text-greenDefault text-sm' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+              <Text className='text-textTitle text-sm' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {word}
               </Text>
               <Pressable onPress={() => handleRemove(word)} disabled={disabled}>
