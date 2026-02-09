@@ -229,9 +229,9 @@ export default function MainScreen() {
 
           {/* Dialogs by Level */}
           {levels.map((level) => (
-            <View key={level} className='mb-6'>
+            <View key={level} className='mb-1'>
               {/* Level Header */}
-              <Text className='text-xs text-textText mb-3' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+              <Text className='text-xs text-textTitle mb-1' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {level}
               </Text>
 
@@ -243,7 +243,7 @@ export default function MainScreen() {
           ))}
 
           {/* End Message */}
-          <Text className='text-xs text-textDis text-center mt-4' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+          <Text className='text-xs text-textText text-center mt-4' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
             {t('main.endOfDialogs')}
           </Text>
         </ScrollView>

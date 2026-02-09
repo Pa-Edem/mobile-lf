@@ -43,16 +43,14 @@ export default function CreateDialogScreen() {
     setIsGenerating(true);
 
     try {
-      // 1. Получаем профиль (target_language + ui_language)
+      // 1. Получаем профиль (target_language)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('target_language, ui_language')
+        .select('target_language')
         .single();
 
       if (profileError) throw new Error('Could not fetch profile');
-
       const targetLanguage = profileData?.target_language || 'fi';
-      const uiLanguage = profileData?.ui_language || 'en';
 
       // 2. Вызываем функцию через SDK (Оно само добавит Bearer Token)
       const { data, error: functionError } = await supabase.functions.invoke('generate-dialog', {
@@ -63,7 +61,6 @@ export default function CreateDialogScreen() {
           tone,
           replicas,
           targetLanguage,
-          uiLanguage,
         },
       });
 

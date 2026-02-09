@@ -1,0 +1,265 @@
+// supabase/functions/generate-dialog/index.ts
+// Endpoint URL: // https://cfyknugijnlpapvyohhu.supabase.co/functions/v1/generate-dialog
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  // 1. CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    console.log("--- New Request Started ---");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
+
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    // Создаем клиент с Service Role для доступа к БД
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Очищаем токен от слова 'Bearer ' если оно есть
+    const token = authHeader.replace("Bearer ", "");
+
+    // Проверяем пользователя через его же токен
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      // Если тут упало, значит токен по какой-то причине не нравится самому Supabase Auth
+      return new Response(JSON.stringify({ error: "Invalid User Token", details: authError?.message }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("✅ User verified ID:", user.id);
+
+    // Данные из body
+    const body = await req.json();
+    console.log("📦 Request body:", body);
+
+    // const { topic, words, level, tone, replicas, targetLanguage } = await req.json();
+    const { topic, words, level, tone, replicas, targetLanguage, uiLanguage } = body;
+
+    // Получаем профиль
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('subscription_tier, is_trial_active, manual_pro, manual_premium')
+      .eq('id', user.id)
+      .single();
+
+    // Определяем эффективный план
+    let effectivePlan = 'free';
+    if (profile?.manual_premium) {
+      effectivePlan = 'premium';
+    } else if (profile?.manual_pro) {
+      effectivePlan = 'pro';
+    } else if (profile?.is_trial_active) {
+      effectivePlan = 'pro';
+    } else {
+      effectivePlan = profile?.subscription_tier || 'free';
+    }
+
+    console.log('📊 Plan:', effectivePlan);
+
+    // Получаем UI язык пользователя для переводов
+    const userUiLanguage = uiLanguage || profile?.ui_language || 'en';
+    
+    // Маппинг UI языков на полные названия
+    const languageNames: Record<string, string> = {
+      'en': 'English',
+      'ru': 'Russian',
+    };
+    
+    const nativeLanguage = languageNames[userUiLanguage] || 'English';
+    
+    // Маппинг target языков на полные названия
+    const targetLanguageNames: Record<string, string> = {
+      'fi': 'Finnish',
+      'en': 'English',
+      'es': 'Spanish',
+      'de': 'German',
+      'fr': 'French',
+      'it': 'Italian',
+      'pt': 'Portuguese',
+      'se': 'Swedish',
+      'no': 'Norwegian',
+    };
+    
+    const targetLanguageName = targetLanguageNames[targetLanguage] || targetLanguage;
+    
+    console.log('🌍 Target language:', targetLanguageName);
+    console.log('🌍 Native language for translations:', nativeLanguage);
+
+    // Формируем промпт для Groq
+    const systemPrompt = `You are an expert language learning assistant. Generate a realistic, natural conversation dialog.
+
+REQUIREMENTS:
+- Target language: ${targetLanguageName} (dialog lines)
+- Native language: ${nativeLanguage} (translations)
+- Topic: "${topic}"
+- Proficiency level: ${level} (CEFR scale)
+- Tone/Formality: ${tone}/10 (1=very casual/everyday, 5=neutral, 10=very formal/official)
+- Number of exchanges: ${replicas} (alternating speakers)
+${words && words.length > 0 ? `- Required words (use naturally): ${words.join(', ')}` : ''}
+
+DIALOG CHARACTERISTICS:
+✓ Realistic, practical, modern everyday situations
+✓ Natural flow with clear speaker roles
+✓ Common idioms and expressions used by native speakers
+✓ Vocabulary appropriate for ${level} level
+
+${level.startsWith('B') || level.startsWith('C') ? `
+ADVANCED LEVEL REQUIREMENTS (${level}):
+✓ Include colloquialisms and informal speech patterns
+✓ Use specialized or professional terms related to the topic
+✓ Complex sentence structures and varied tenses
+` : ''}
+
+OUTPUT FORMAT:
+Return STRICTLY valid JSON with NO markdown, NO explanations, NO extra text.
+Use ONLY double quotes (") for JSON. If quotes needed inside text, use single quotes (').
+
+{
+  "target": ["Line 1 in ${targetLanguageName}", "Line 2 in ${targetLanguageName}", ...],
+  "native": ["Translation 1 in ${nativeLanguage}", "Translation 2 in ${nativeLanguage}", ...],
+  "options": [
+    ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+    ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+    ...
+  ]
+}
+
+CRITICAL RULES:
+1. All 3 arrays MUST have EXACTLY ${replicas} items
+2. First option in each "options" array MUST be the CORRECT translation (same as corresponding "native" item)
+3. Wrong options should be:
+   - Grammatically plausible
+   - Similar vocabulary but wrong meaning
+   - Common learner mistakes
+   - NOT obviously absurd
+4. Return ONLY valid JSON, no \`\`\`json blocks
+
+EXAMPLE (Finnish/English, 2 replicas):
+{
+  "target": ["Hei! Mitä sinä haluat?", "Haluaisin yhden kahvin, kiitos."],
+  "native": ["Hi! What do you want?", "I would like one coffee, please."],
+  "options": [
+    ["Hi! What do you want?", "Goodbye!", "How are you?", "What time is it?"],
+    ["I would like one coffee, please.", "I don't like coffee.", "Where is the cafe?", "I'm tired."]
+  ]
+}`;
+
+    // Вызываем Groq API
+    const groqApiKey = Deno.env.get('GROQ_API_KEY');
+    if (!groqApiKey) {
+      throw new Error('GROQ_API_KEY not configured');
+    }
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: `Generate a dialog about: ${topic}`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!groqResponse.ok) {
+      const error = await groqResponse.text();
+      console.error('❌ Groq error:', error);
+      throw new Error('AI generation failed');
+    }
+
+    const groqData = await groqResponse.json();
+    const aiContent = groqData.choices[0].message.content;
+
+    console.log('✅ AI Response received');
+
+    let content; 
+    try {
+      const cleanContent = aiContent.replace(/```json\n?|\n?```/g, "").trim();
+      content = JSON.parse(cleanContent);
+    } catch (parseError) {
+      throw new Error("Failed to parse AI response: " + parseError.message);
+    }
+
+    // Сохраняем в БД используя supabaseAdmin (игнорируя RLS для системной записи)
+    const { data: dialog, error: insertError } = await supabaseAdmin
+      .from("dialogs")
+      .insert({
+        user_id: user.id,
+        topic,
+        level,
+        target_language: targetLanguage,
+        tone,
+        replicas_count: replicas,
+        required_words: words || null,
+        content: content,
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    console.log('✅ Dialog saved:', dialog.id);
+
+    // Обновляем счётчики
+try {
+  const { error: counterError } = await supabaseAdmin.rpc('increment', {
+    row_id: user.id,
+    column_name: 'daily_generations_used',
+  });
+
+  if (counterError) {
+    console.error('⚠️ Counter update failed:', counterError);
+  } else {
+    console.log('✅ Counter updated');
+  }
+} catch (err) {
+  console.error('⚠️ Counter error:', err);
+}
+
+    return new Response(JSON.stringify({ success: true, data: { dialogId: dialog.id }, message: "Dialog created successfully", userId: user.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    console.error("💥 Function Error:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

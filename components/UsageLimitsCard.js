@@ -31,7 +31,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
           {/* Generations */}
           <View className='mb-4'>
             <View className='flex-row justify-between mb-1'>
-              <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+              <Text className='text-xs text-textTitle' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.generations')}
               </Text>
               <Text className='text-xs text-textHead' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
@@ -49,7 +49,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
           {/* PRO Features */}
           <View className='mb-4'>
             <View className='flex-row justify-between mb-1'>
-              <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+              <Text className='text-xs text-textTitle' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.proFeatures')}
               </Text>
               <Text className='text-xs text-textHead' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
@@ -67,7 +67,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
           {/* Saved Dialogs */}
           <View>
             <View className='flex-row justify-between mb-1'>
-              <Text className='text-xs text-textText' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+              <Text className='text-xs text-textTitle' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
                 {t('main.savedDialogs')}
               </Text>
               <Text className='text-xs text-textHead' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>

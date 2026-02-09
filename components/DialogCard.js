@@ -13,7 +13,7 @@ export default function DialogCard({ dialog, onPress }) {
   };
 
   return (
-    <Pressable onPress={onPress} className='bg-white rounded-2xl p-4 mb-3 border border-brdLight active:bg-bgSide'>
+    <Pressable onPress={onPress} className='bg-white rounded-2xl p-4 mb-2 border border-brdLight active:bg-bgSide'>
       <View className='flex-row items-center justify-between'>
         <View className='flex-1'>
           <Text className='text-lg text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
