@@ -210,6 +210,33 @@ EXAMPLE (Finnish/English, 2 replicas):
     try {
       const cleanContent = aiContent.replace(/```json\n?|\n?```/g, "").trim();
       content = JSON.parse(cleanContent);
+
+      // ========== ПОСТОБРАБОТКА: ДОБАВЛЯЕМ ТОЧКИ ==========
+      // Добавляем точки к предложениям без пунктуации
+      content.target = content.target.map((text: string) => {
+        const trimmed = text.trim();
+        // Если нет знака препинания в конце - добавляем точку
+        if (!/[.!?]$/.test(trimmed)) {
+          return trimmed + '.';
+        }
+        return trimmed;
+      });
+
+      content.native = content.native.map((text: string) => {
+        const trimmed = text.trim();
+        if (!/[.!?]$/.test(trimmed)) {
+          return trimmed + '.';
+        }
+        return trimmed;
+      });
+
+      // Синхронизируем options[i][0] с обновлённым native[i]
+      content.options = content.options.map((opts: string[], i: number) => {
+        opts[0] = content.native[i];
+        return opts;
+      });
+    // ====================================================
+  
     } catch (parseError) {
       throw new Error("Failed to parse AI response: " + parseError.message);
     }

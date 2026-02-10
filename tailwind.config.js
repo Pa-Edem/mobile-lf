@@ -1,4 +1,5 @@
 // tailwind.config.js
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
@@ -13,16 +14,16 @@ module.exports = {
         // Backgrounds
         bgMain: '#faf8f5', // светло-бежевый
         bgSide: 'hsl(33, 26%, 93%)', // бежевый для карточек
-        bgCard: 'hsl(32, 25%, 88%)', // средний бежевый
+        bgCard: '#e8e1d9', // средний бежевый
         // Text
         textHead: '#2e271f', // тёмно-коричневый
         textTitle: '#594e40', // коричневый
-        textText: 'hsl(29, 10%, 55%)', // средний коричневый
+        textText: '#988c81', // средний коричневый
         textDis: '#d6cec2', // светлый
         // Borders
         brd: '#70665c', // основная граница
-        brdLight: 'hsl(36, 20%, 80%)', // светлая граница
-        divider: 'hsl(30, 20%, 70%)', // разделитель
+        brdLight: '#d6cec2', // светлая граница
+        divider: '#c2b3a3', // разделитель
         // Tier colors
         tierFree: 'hsl(130, 45%, 50%)', // зелёный
         tierPro: 'hsl(260, 60%, 50%)', // фиолетовый
@@ -34,11 +35,13 @@ module.exports = {
         error: 'hsl(5, 80%, 70%)', // красный
         info: 'hsl(210, 70%, 50%)', // голубой
         /* Белые/светлые для чатов */
-        chatLeft: '#e9f5fc' /* Голубоватый белый */,
-        chatRight: '#fdfde7' /* Желтоватый белый */,
+        chatLeft: 'hsl(202, 76%, 95%)' /* Голубоватый белый */,
+        chatRight: 'hsl(60, 85%, 95%)' /* Желтоватый белый */,
       },
       fontFamily: {
         roboto: ['RobotoCondensed_400Regular'],
+        robotoItalic: ['RobotoCondensed_400Regular_Italic'],
+        robotoMedium: ['RobotoCondensed_500Medium'],
         robotoBold: ['RobotoCondensed_700Bold'],
       },
     },

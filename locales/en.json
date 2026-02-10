@@ -117,7 +117,9 @@
     "messages": "Messages"
   },
   "common": {
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "cancel": "Cancel",
+    "delete": "Delete"
   },
   "upgrade": {
     "title": "Upgrade to PRO",
@@ -127,5 +129,15 @@
     "feature3": "Premium voice quality",
     "upgradeButton": "Upgrade Now",
     "later": "Maybe Later"
+  },
+  "viewDialog": {
+    "replicas": "replicas",
+    "endOfReplicas": "END OF DIALOG",
+    "analyze": "Analyze dialog",
+    "export": "Export",
+    "delete": "Delete dialog",
+    "deleteTitle": "Delete dialog?",
+    "deleteMessage": "This action cannot be undone",
+    "deleted": "Dialog deleted"
   }
 }

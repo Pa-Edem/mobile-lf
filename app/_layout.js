@@ -1,5 +1,11 @@
 // app/_layout.js
-import { RobotoCondensed_400Regular, RobotoCondensed_700Bold, useFonts } from '@expo-google-fonts/roboto-condensed';
+import {
+  RobotoCondensed_400Regular,
+  RobotoCondensed_400Regular_Italic,
+  RobotoCondensed_500Medium,
+  RobotoCondensed_700Bold,
+  useFonts,
+} from '@expo-google-fonts/roboto-condensed';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -57,6 +63,8 @@ export default function RootLayout() {
 
   const [fontsLoaded] = useFonts({
     RobotoCondensed_400Regular,
+    RobotoCondensed_400Regular_Italic,
+    RobotoCondensed_500Medium,
     RobotoCondensed_700Bold,
   });
 

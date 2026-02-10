@@ -117,7 +117,9 @@
     "messages": "Уведомления"
   },
   "common": {
-    "comingSoon": "Скоро"
+    "comingSoon": "Скоро",
+    "cancel": "Отмена",
+    "delete": "Удалить"
   },
   "upgrade": {
     "title": "Обновить до PRO",
@@ -127,5 +129,15 @@
     "feature3": "Премиум качество голоса",
     "upgradeButton": "Обновить сейчас",
     "later": "Может быть позже"
+  },
+  "viewDialog": {
+    "replicas": "реплик",
+    "endOfReplicas": "КОНЕЦ ДИАЛОГА",
+    "analyze": "Анализ диалога",
+    "export": "Экспорт",
+    "delete": "Удалить диалог",
+    "deleteTitle": "Удалить диалог?",
+    "deleteMessage": "Это действие нельзя отменить",
+    "deleted": "Диалог удалён"
   }
 }
