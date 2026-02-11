@@ -1,3 +1,4 @@
+// components/SplashScreen.js
 import { useEffect, useRef } from 'react';
 import { Animated, Image, Text, View } from 'react-native';
 
@@ -11,13 +12,13 @@ export default function SplashScreen() {
       // Fade in
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 1000,
         useNativeDriver: true,
       }),
       // Scale up
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 1000,
         useNativeDriver: true,
       }),
     ]).start();

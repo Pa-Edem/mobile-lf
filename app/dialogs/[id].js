@@ -6,12 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import ReplicaCard from '../../components/ReplicaCard';
 import TrainingButton from '../../components/TrainingButton';
+import { useAudioPlayer } from '../../hooks/useAudioPlayer';
 import { canUseProFeatures, getEffectivePlan } from '../../lib/planUtils';
 import { supabase } from '../../lib/supabase';
 
 export default function ViewDialogScreen() {
   const { id } = useLocalSearchParams();
   const { t } = useTranslation();
+  const { playSequence, pause, stop, isPlaying, isPaused } = useAudioPlayer();
 
   const [dialog, setDialog] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -60,22 +62,38 @@ export default function ViewDialogScreen() {
     loadData();
   }, [loadData]);
 
+  // Останавливаем аудио при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const effectivePlan = getEffectivePlan(profile);
   const isPaid = effectivePlan === 'pro' || effectivePlan === 'premium';
   const isPremium = effectivePlan === 'premium';
   const hasProFeatures = canUseProFeatures(usage, profile);
 
-  // Play all dialog
-  const handlePlayAll = () => {
-    console.log('🔊 Playing all dialog...');
-    // TODO: Implement audio playback (Phase 2 Step 5)
-    Alert.alert('Coming soon', 'Audio playback will be implemented in Phase 2 Step 5');
-  };
+  // Play all dialog (Play/Pause/Resume)
+  const handlePlayAll = async () => {
+    if (!dialog) return;
 
-  // Play single replica
-  const handlePlayReplica = (index) => {
-    console.log('🔊 Playing replica:', index);
-    // TODO: Implement single replica playback
+    console.log('🔘 Button pressed | isPlaying:', isPlaying, '| isPaused:', isPaused);
+
+    if (isPlaying) {
+      // Pause
+      console.log('User pressed Pause');
+      await pause();
+    } else if (isPaused) {
+      // Resume
+      console.log('User pressed Resume');
+      await playSequence(dialog.content.target, dialog.target_language, 1.0);
+    } else {
+      // Play from start
+      console.log('User pressed Play');
+      await playSequence(dialog.content.target, dialog.target_language, 1.0);
+    }
   };
 
   // Menu actions
@@ -166,13 +184,7 @@ export default function ViewDialogScreen() {
       {/* Content - Replicas */}
       <ScrollView className='flex-1 px-6 py-4' showsVerticalScrollIndicator={false}>
         {content.target.map((text, index) => (
-          <ReplicaCard
-            key={index}
-            text={text}
-            translation={content.native[index]}
-            isLeft={index % 2 === 0}
-            onPlay={() => handlePlayReplica(index)}
-          />
+          <ReplicaCard key={index} text={text} translation={content.native[index]} isLeft={index % 2 === 0} />
         ))}
 
         {/* End Message */}
@@ -187,7 +199,13 @@ export default function ViewDialogScreen() {
       {/* Floating Play All Button */}
       <Pressable
         onPress={handlePlayAll}
-        className='absolute bottom-40 right-8 w-14 h-14 rounded-full bg-greenDefault items-center justify-center shadow-lg active:bg-greenDark'
+        className={`absolute bottom-40 right-8 w-14 h-14 rounded-full items-center justify-center shadow-lg ${
+          isPlaying
+            ? 'bg-greenDefault active:bg-greenDark'
+            : isPaused
+              ? 'bg-orange-500 active:bg-orange-600'
+              : 'bg-greenDefault active:bg-greenDark'
+        }`}
         style={{
           elevation: 8,
           shadowColor: '#000',
@@ -196,7 +214,7 @@ export default function ViewDialogScreen() {
           shadowRadius: 4,
         }}
       >
-        <Ionicons name='volume-high' size={28} color='white' />
+        <Ionicons name={isPlaying ? 'pause' : isPaused ? 'play' : 'volume-high'} size={28} color='white' />
       </Pressable>
 
       {/* Footer - Training Levels (1x4) */}

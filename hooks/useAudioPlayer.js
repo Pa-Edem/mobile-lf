@@ -4,86 +4,24 @@ import { useRef, useState } from 'react';
 
 /**
  * Hook для озвучки текста через Browser TTS (expo-speech)
- *
- * @returns {Object} - { play, stop, isPlaying }
+ * Поддерживает Play/Pause/Resume
  */
 export function useAudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const currentIndexRef = useRef(null);
-  const isStopped = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const currentIndexRef = useRef(0);
+  const textsRef = useRef([]);
+  const languageRef = useRef('en-US');
+  const rateRef = useRef(1.0);
+  const shouldStopRef = useRef(false);
+  const shouldPauseRef = useRef(false);
+  const isPausedRef = useRef(false);
 
   /**
-   * Воспроизвести текст на указанном языке
-   *
-   * @param {string} text - текст для озвучки
-   * @param {string} language - код языка (fi, en, es, de, fr, it, pt, se, no)
-   * @param {number} rate - скорость речи (0.5 - 2.0, default: 1.0)
+   * Маппинг языковых кодов на locale
    */
-  const play = async (text, language, rate = 1.0) => {
-    if (isPlaying) {
-      console.log('⚠️ Already playing, stopping previous...');
-      await stop();
-    }
-
-    isStopped.current = false;
-    setIsPlaying(true);
-
-    // Маппинг языковых кодов на locale для expo-speech
-    const languageLocales = {
-      fi: 'fi-FI',
-      en: 'en-US',
-      es: 'es-ES',
-      de: 'de-DE',
-      fr: 'fr-FR',
-      it: 'it-IT',
-      pt: 'pt-PT',
-      se: 'sv-SE', // Swedish
-      no: 'nb-NO', // Norwegian Bokmål
-    };
-
-    const locale = languageLocales[language] || 'en-US';
-
-    console.log('🔊 Playing:', text.substring(0, 50), '| Language:', locale);
-
-    try {
-      await Speech.speak(text, {
-        language: locale,
-        rate: rate,
-        pitch: 1.0,
-        onDone: () => {
-          if (!isStopped.current) {
-            console.log('✅ Speech finished');
-            setIsPlaying(false);
-          }
-        },
-        onError: (error) => {
-          console.error('❌ Speech error:', error);
-          setIsPlaying(false);
-        },
-      });
-    } catch (error) {
-      console.error('💥 Play error:', error);
-      setIsPlaying(false);
-    }
-  };
-
-  /**
-   * Воспроизвести массив текстов последовательно
-   *
-   * @param {string[]} texts - массив текстов
-   * @param {string} language - код языка
-   * @param {number} rate - скорость речи
-   * @param {Function} onProgress - callback при смене реплики (index)
-   */
-  const playSequence = async (texts, language, rate = 1.0, onProgress = null) => {
-    if (isPlaying) {
-      console.log('⚠️ Already playing, stopping previous...');
-      await stop();
-    }
-
-    isStopped.current = false;
-    setIsPlaying(true);
-
+  const getLocale = (language) => {
     const languageLocales = {
       fi: 'fi-FI',
       en: 'en-US',
@@ -95,62 +33,130 @@ export function useAudioPlayer() {
       se: 'sv-SE',
       no: 'nb-NO',
     };
+    return languageLocales[language] || 'en-US';
+  };
 
-    const locale = languageLocales[language] || 'en-US';
+  /**
+   * Воспроизвести одну реплику
+   */
+  const playSingleText = async (text, locale, rate) => {
+    return new Promise((resolve, reject) => {
+      Speech.speak(text, {
+        language: locale,
+        rate: rate,
+        pitch: 1.0,
+        onDone: resolve,
+        onError: (error) => {
+          console.error('Speech error:', error);
+          resolve(); // Продолжаем даже при ошибке
+        },
+      });
+    });
+  };
 
-    console.log('🔊 Playing sequence:', texts.length, 'items | Language:', locale);
+  /**
+   * Воспроизвести последовательность
+   */
+  const playSequence = async (texts, language, rate = 1.0, onProgress = null) => {
+    // Сохраняем параметры
+    textsRef.current = texts;
+    languageRef.current = getLocale(language);
+    rateRef.current = rate;
 
-    for (let i = 0; i < texts.length; i++) {
-      if (isStopped.current) {
-        console.log('⏹️ Sequence stopped by user');
-        break;
+    let startIndex = 0;
+
+    if (isPausedRef.current) {
+      // Resume - продолжаем с сохранённой позиции
+      console.log('▶️ Resuming from index:', currentIndexRef.current);
+      startIndex = currentIndexRef.current;
+      isPausedRef.current = false;
+      setIsPaused(false);
+      setIsPlaying(true);
+      shouldPauseRef.current = false;
+    } else {
+      // Play - начинаем с начала
+      console.log('🔊 Starting new sequence:', texts.length, 'items');
+      currentIndexRef.current = 0;
+      startIndex = 0;
+      setIsPlaying(true);
+      setIsPaused(false);
+      shouldPauseRef.current = false;
+    }
+
+    shouldStopRef.current = false;
+
+    for (let i = startIndex; i < textsRef.current.length; i++) {
+      // Проверка на Stop
+      if (shouldStopRef.current) {
+        console.log('⏹️ Sequence stopped');
+        setIsPlaying(false);
+        setIsPaused(false);
+        currentIndexRef.current = 0;
+        return;
+      }
+
+      // Проверка на Pause ДО воспроизведения
+      if (shouldPauseRef.current) {
+        console.log('⏸️ Sequence paused at index:', i);
+        currentIndexRef.current = i; // Сохраняем ТЕКУЩУЮ позицию
+        setIsPlaying(false);
+        setIsPaused(true);
+        return;
       }
 
       currentIndexRef.current = i;
       if (onProgress) onProgress(i);
 
-      console.log(`🔊 [${i + 1}/${texts.length}]:`, texts[i].substring(0, 50));
+      console.log(`🔊 [${i + 1}/${textsRef.current.length}]:`, textsRef.current[i].substring(0, 50));
 
-      await new Promise((resolve, reject) => {
-        Speech.speak(texts[i], {
-          language: locale,
-          rate: rate,
-          pitch: 1.0,
-          onDone: resolve,
-          onError: (error) => {
-            console.error(`❌ Speech error at index ${i}:`, error);
-            reject(error);
-          },
-        });
-      });
+      await playSingleText(textsRef.current[i], languageRef.current, rateRef.current);
 
-      // Небольшая пауза между репликами (300ms)
-      if (i < texts.length - 1 && !isStopped.current) {
+      // Пауза между репликами
+      if (i < textsRef.current.length - 1 && !shouldStopRef.current && !shouldPauseRef.current) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
 
-    currentIndexRef.current = null;
-    setIsPlaying(false);
+    // Завершение
     console.log('✅ Sequence finished');
+    setIsPlaying(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    currentIndexRef.current = 0;
   };
 
   /**
-   * Остановить воспроизведение
+   * Pause
+   */
+  const pause = async () => {
+    console.log('⏸️ Pausing...');
+    shouldPauseRef.current = true;
+    isPausedRef.current = true;
+    setIsPlaying(false);
+    setIsPaused(true);
+    await Speech.stop();
+  };
+
+  /**
+   * Stop (полный сброс)
    */
   const stop = async () => {
-    console.log('⏹️ Stopping speech...');
-    isStopped.current = true;
+    console.log('⏹️ Stopping...');
+    shouldStopRef.current = true;
+    shouldPauseRef.current = false;
+    isPausedRef.current = false;
     await Speech.stop();
     setIsPlaying(false);
-    currentIndexRef.current = null;
+    setIsPaused(false);
+    currentIndexRef.current = 0;
   };
 
   return {
-    play,
     playSequence,
+    pause,
     stop,
     isPlaying,
+    isPaused,
     currentIndex: currentIndexRef.current,
   };
 }

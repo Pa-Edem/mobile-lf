@@ -11,7 +11,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import SplashScreenComponent from '../components/SplashScreen';
 import { SupabaseProvider, useSupabase } from '../contexts/SupabaseContext';
 import i18n from '../lib/i18n';
 import './global.css';
@@ -21,6 +20,19 @@ const queryClient = new QueryClient();
 SplashScreen.preventAutoHideAsync();
 
 const LANGUAGE_KEY = '@lingua_flow:ui_language';
+
+// Компонент-контроллер Splash Screen
+function SplashScreenController() {
+  const { loading } = useSupabase();
+
+  useEffect(() => {
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading]);
+
+  return null;
+}
 
 // Навигатор с защитой маршрутов
 function RootLayoutNav() {
@@ -64,36 +76,28 @@ export default function RootLayout() {
         if (storedLanguage && storedLanguage !== i18n.language) {
           await i18n.changeLanguage(storedLanguage);
         }
+
+        // Ждем загрузки шрифтов
+        if (fontsLoaded) {
+          setAppIsReady(true);
+        }
       } catch (error) {
         console.error('Error during app initialization:', error);
-      } finally {
-        // Помечаем что инициализация завершена
         setAppIsReady(true);
       }
     }
 
-    // Запускаем только ОДИН раз при монтировании
-    if (!appIsReady) {
-      prepare();
-    }
-  }, [appIsReady]);
+    prepare();
+  }, [fontsLoaded]);
 
-  // Отдельно ждём шрифты
-  useEffect(() => {
-    if (fontsLoaded && appIsReady) {
-      // Всё готово - можно скрыть Splash Screen
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, appIsReady]);
-
-  // Показываем кастомный Splash Screen пока не готово
-  if (!appIsReady || !fontsLoaded) {
-    return <SplashScreenComponent />;
+  if (!appIsReady) {
+    return null;
   }
 
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseProvider>
+        <SplashScreenController />
         <RootLayoutNav />
       </SupabaseProvider>
     </QueryClientProvider>
