@@ -110,7 +110,7 @@ export default function ViewDialogScreen() {
 
             if (error) throw error;
 
-            Alert.alert(t('common.success'), t('viewDialog.deleted'));
+            Alert.alert(t('viewDialog.deleted'));
             router.back();
           } catch (error) {
             console.error('Delete error:', error);

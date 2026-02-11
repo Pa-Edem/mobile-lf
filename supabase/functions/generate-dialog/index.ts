@@ -108,55 +108,119 @@ serve(async (req) => {
     console.log('🌍 Native language for translations:', nativeLanguage);
 
     // Формируем промпт для Groq
-    const systemPrompt = `You are an expert language learning assistant. Generate a realistic, natural conversation dialog.
+//     const systemPrompt = `You are an expert language learning assistant. Generate a realistic, natural conversation dialog.
 
-REQUIREMENTS:
-- Target language: ${targetLanguageName} (dialog lines)
-- Native language: ${nativeLanguage} (translations)
-- Topic: "${topic}"
-- Proficiency level: ${level} (CEFR scale)
-- Tone/Formality: ${tone}/10 (1=very casual/everyday, 5=neutral, 10=very formal/official)
-- Number of exchanges: ${replicas} (alternating speakers)
-${words && words.length > 0 ? `- Required words (use naturally): ${words.join(', ')}` : ''}
+// REQUIREMENTS:
+// - Target language: ${targetLanguageName} (dialog lines)
+// - Native language: ${nativeLanguage} (translations)
+// - Topic: "${topic}"
+// - Proficiency level: ${level} (CEFR scale)
+// - Tone/Formality: ${tone}/10 (1=very casual/everyday, 5=neutral, 10=very formal/official)
+// - Number of exchanges: ${replicas} (alternating speakers)
+// ${words && words.length > 0 ? `- Required words (use naturally): ${words.join(', ')}` : ''}
 
-DIALOG CHARACTERISTICS:
-✓ Realistic, practical, modern everyday situations
-✓ Natural flow with clear speaker roles
-✓ Common idioms and expressions used by native speakers
-✓ Vocabulary appropriate for ${level} level
+// DIALOG CHARACTERISTICS:
+// ✓ Realistic, practical, modern everyday situations
+// ✓ Natural flow with clear speaker roles
+// ✓ Common idioms and expressions used by native speakers
+// ✓ Vocabulary appropriate for ${level} level
 
-${level.startsWith('B') || level.startsWith('C') ? `
-ADVANCED LEVEL REQUIREMENTS (${level}):
-✓ Include colloquialisms and informal speech patterns
-✓ Use specialized or professional terms related to the topic
-✓ Complex sentence structures and varied tenses
-` : ''}
+// ${level.startsWith('B') || level.startsWith('C') ? `
+// ADVANCED LEVEL REQUIREMENTS (${level}):
+// ✓ Include colloquialisms and informal speech patterns
+// ✓ Use specialized or professional terms related to the topic
+// ✓ Complex sentence structures and varied tenses
+// ` : ''}
 
-OUTPUT FORMAT:
-Return STRICTLY valid JSON with NO markdown, NO explanations, NO extra text.
-Use ONLY double quotes (") for JSON. If quotes needed inside text, use single quotes (').
+// OUTPUT FORMAT:
+// Return STRICTLY valid JSON with NO markdown, NO explanations, NO extra text.
+// Use ONLY double quotes (") for JSON. If quotes needed inside text, use single quotes (').
+
+// {
+//   "target": ["Line 1 in ${targetLanguageName}", "Line 2 in ${targetLanguageName}", ...],
+//   "native": ["Translation 1 in ${nativeLanguage}", "Translation 2 in ${nativeLanguage}", ...],
+//   "options": [
+//     ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+//     ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+//     ...
+//   ]
+// }
+
+// CRITICAL RULES:
+// 1. All 3 arrays MUST have EXACTLY ${replicas} items
+// 2. First option in each "options" array MUST be the CORRECT translation (same as corresponding "native" item)
+// 3. Wrong options should be:
+//    - Grammatically plausible
+//    - Similar vocabulary but wrong meaning
+//    - Common learner mistakes
+//    - NOT obviously absurd
+// 4. Return ONLY valid JSON, no \`\`\`json blocks
+
+// EXAMPLE (Finnish/English, 2 replicas):
+// {
+//   "target": ["Hei! Mitä sinä haluat?", "Haluaisin yhden kahvin, kiitos."],
+//   "native": ["Hi! What do you want?", "I would like one coffee, please."],
+//   "options": [
+//     ["Hi! What do you want?", "Goodbye!", "How are you?", "What time is it?"],
+//     ["I would like one coffee, please.", "I don't like coffee.", "Where is the cafe?", "I'm tired."]
+//   ]
+// }`;
+
+// Формируем промпт для Groq по структуре ROLE → CONTEXT → TASK → CONSTRAINTS → FORMAT
+const systemPrompt = `### ROLE
+You are an expert language learning content creator specializing in CEFR-aligned conversational dialogs. Your communication style is precise and pedagogically sound.
+
+### CONTEXT
+I am creating language learning materials for students at ${level} level (CEFR scale). The target audience is adult learners who want to practice realistic everyday conversations in ${targetLanguageName}. Their native language is ${nativeLanguage}.
+
+The dialog should be about: "${topic}"
+${words && words.length > 0 ? `It must naturally incorporate these vocabulary words: ${words.join(', ')}` : ''}
+
+### TASK
+Generate a realistic, natural conversation between two speakers with exactly ${replicas} exchanges (alternating turns).
+
+Requirements for the dialog:
+1. Vocabulary and grammar must match ${level} proficiency level
+2. Formality level: ${tone}/10 (1=very casual everyday speech, 5=neutral, 10=very formal/official)
+3. Conversation must feel authentic and useful for real-life situations
+4. Include common idioms and expressions that native speakers actually use
+${level.startsWith('B') || level.startsWith('C') ? `5. For ${level} level: use colloquialisms, informal speech patterns, specialized terms, complex structures` : ''}
+
+For each dialog line, provide:
+- Original text in ${targetLanguageName}
+- Accurate translation in ${nativeLanguage}
+- 4 multiple-choice options (1 correct + 3 plausible distractors)
+
+Distractors should be:
+- Grammatically plausible
+- Similar vocabulary but wrong meaning
+- Common learner mistakes
+- NOT obviously absurd or nonsensical
+
+### CONSTRAINTS
+- Do NOT use markdown formatting (no \`\`\`json blocks)
+- Do NOT add explanations or preambles
+- Do NOT use obvious or joke distractors
+- Use ONLY double quotes (") for JSON strings
+- If quotes are needed inside text, use single quotes (')
+- All 3 arrays must have EXACTLY ${replicas} items
+
+### FORMAT
+Return ONLY valid JSON in this exact structure:
 
 {
-  "target": ["Line 1 in ${targetLanguageName}", "Line 2 in ${targetLanguageName}", ...],
-  "native": ["Translation 1 in ${nativeLanguage}", "Translation 2 in ${nativeLanguage}", ...],
+  "target": ["First line in ${targetLanguageName}", "Second line in ${targetLanguageName}", ...],
+  "native": ["First translation in ${nativeLanguage}", "Second translation in ${nativeLanguage}", ...],
   "options": [
-    ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
-    ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+    ["CORRECT translation", "Plausible wrong option 1", "Plausible wrong option 2", "Plausible wrong option 3"],
+    ["CORRECT translation", "Plausible wrong option 1", "Plausible wrong option 2", "Plausible wrong option 3"],
     ...
   ]
 }
 
-CRITICAL RULES:
-1. All 3 arrays MUST have EXACTLY ${replicas} items
-2. First option in each "options" array MUST be the CORRECT translation (same as corresponding "native" item)
-3. Wrong options should be:
-   - Grammatically plausible
-   - Similar vocabulary but wrong meaning
-   - Common learner mistakes
-   - NOT obviously absurd
-4. Return ONLY valid JSON, no \`\`\`json blocks
+CRITICAL: The first item in each "options" array MUST be identical to the corresponding "native" translation.
 
-EXAMPLE (Finnish/English, 2 replicas):
+Example for Finnish/English, 2 exchanges:
 {
   "target": ["Hei! Mitä sinä haluat?", "Haluaisin yhden kahvin, kiitos."],
   "native": ["Hi! What do you want?", "I would like one coffee, please."],
