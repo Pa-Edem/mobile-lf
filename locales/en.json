@@ -139,5 +139,23 @@
     "deleteTitle": "Delete dialog?",
     "deleteMessage": "This action cannot be undone",
     "deleted": "Dialog deleted"
+  },
+  "training": {
+    "level1": {
+      "title": "Listen, read and repeat step by step.",
+      "progress": "Replica {{current}} of {{total}}",
+      "completion": {
+        "title": "Level completed!",
+        "message": "You have listened to the entire dialog.",
+        "backToDialog": "Back to dialog",
+        "repeatLevel": "Repeat level"
+      }
+    },
+    "completion": {
+      "excellent": "Excellent!",
+      "good": "Good!",
+      "completed": "Training completed!",
+      "accuracy": "Accuracy: {{accuracy}}%"
+    }
   }
 }

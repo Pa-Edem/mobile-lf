@@ -139,5 +139,23 @@
     "deleteTitle": "Удалить диалог?",
     "deleteMessage": "Это действие нельзя отменить",
     "deleted": "Диалог удалён"
+  },
+  "training": {
+    "level1": {
+      "title": "Слушай, читай и повторяй шаг за шагом.",
+      "progress": "Реплика {{current}} из {{total}}",
+      "completion": {
+        "title": "Уровень завершён!",
+        "message": "Вы прослушали весь диалог.",
+        "backToDialog": "Вернуться к диалогу",
+        "repeatLevel": "Повторить уровень"
+      }
+    },
+    "completion": {
+      "excellent": "Отлично!",
+      "good": "Хорошо!",
+      "completed": "Тренировка завершена!",
+      "accuracy": "Точность: {{accuracy}}%"
+    }
   }
 }

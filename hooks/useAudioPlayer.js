@@ -1,4 +1,20 @@
 // hooks/useAudioPlayer.js
+
+/**
+ * Audio Player Hook для Lingua Flow
+ *
+ * Текущая версия: Browser TTS (expo-speech)
+ */
+// TODO Phase 4: Premium Audio
+/**
+ * - Добавить интеграцию с ElevenLabs TTS API
+ * - Проверка плана пользователя (FREE = browser, PRO/PREMIUM = ElevenLabs)
+ * - Кэширование аудио файлов локально
+ * - Настройки голоса и скорости для PRO/PREMIUM
+ *
+ * См. API_DOCUMENTATION.md → generate-audio endpoint
+ */
+
 import * as Speech from 'expo-speech';
 import { useRef, useState } from 'react';
 

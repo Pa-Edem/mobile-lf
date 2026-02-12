@@ -75,6 +75,11 @@ export default function ViewDialogScreen() {
   const isPremium = effectivePlan === 'premium';
   const hasProFeatures = canUseProFeatures(usage, profile);
 
+  // TODO Phase 4: Premium Audio
+  // Сейчас все планы используют Browser TTS
+  // В будущем: PRO/PREMIUM → ElevenLabs TTS с выбором голоса
+  // FREE → Browser TTS (текущая реализация)
+
   // Play all dialog (Play/Pause/Resume)
   const handlePlayAll = async () => {
     if (!dialog) return;
@@ -155,7 +160,9 @@ export default function ViewDialogScreen() {
     );
   }
 
-  const { topic, level, replicas_count, content } = dialog;
+  // const { topic, level, replicas_count, content } = dialog;
+  const { topic, level, content } = dialog;
+  const replicas_count = content.target.length;
 
   return (
     <View className='flex-1 bg-bgMain'>

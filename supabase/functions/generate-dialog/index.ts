@@ -54,7 +54,6 @@ serve(async (req) => {
     const body = await req.json();
     console.log("📦 Request body:", body);
 
-    // const { topic, words, level, tone, replicas, targetLanguage } = await req.json();
     const { topic, words, level, tone, replicas, targetLanguage, uiLanguage } = body;
 
     // Получаем профиль
@@ -107,65 +106,6 @@ serve(async (req) => {
     console.log('🌍 Target language:', targetLanguageName);
     console.log('🌍 Native language for translations:', nativeLanguage);
 
-    // Формируем промпт для Groq
-//     const systemPrompt = `You are an expert language learning assistant. Generate a realistic, natural conversation dialog.
-
-// REQUIREMENTS:
-// - Target language: ${targetLanguageName} (dialog lines)
-// - Native language: ${nativeLanguage} (translations)
-// - Topic: "${topic}"
-// - Proficiency level: ${level} (CEFR scale)
-// - Tone/Formality: ${tone}/10 (1=very casual/everyday, 5=neutral, 10=very formal/official)
-// - Number of exchanges: ${replicas} (alternating speakers)
-// ${words && words.length > 0 ? `- Required words (use naturally): ${words.join(', ')}` : ''}
-
-// DIALOG CHARACTERISTICS:
-// ✓ Realistic, practical, modern everyday situations
-// ✓ Natural flow with clear speaker roles
-// ✓ Common idioms and expressions used by native speakers
-// ✓ Vocabulary appropriate for ${level} level
-
-// ${level.startsWith('B') || level.startsWith('C') ? `
-// ADVANCED LEVEL REQUIREMENTS (${level}):
-// ✓ Include colloquialisms and informal speech patterns
-// ✓ Use specialized or professional terms related to the topic
-// ✓ Complex sentence structures and varied tenses
-// ` : ''}
-
-// OUTPUT FORMAT:
-// Return STRICTLY valid JSON with NO markdown, NO explanations, NO extra text.
-// Use ONLY double quotes (") for JSON. If quotes needed inside text, use single quotes (').
-
-// {
-//   "target": ["Line 1 in ${targetLanguageName}", "Line 2 in ${targetLanguageName}", ...],
-//   "native": ["Translation 1 in ${nativeLanguage}", "Translation 2 in ${nativeLanguage}", ...],
-//   "options": [
-//     ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
-//     ["CORRECT translation in ${nativeLanguage}", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
-//     ...
-//   ]
-// }
-
-// CRITICAL RULES:
-// 1. All 3 arrays MUST have EXACTLY ${replicas} items
-// 2. First option in each "options" array MUST be the CORRECT translation (same as corresponding "native" item)
-// 3. Wrong options should be:
-//    - Grammatically plausible
-//    - Similar vocabulary but wrong meaning
-//    - Common learner mistakes
-//    - NOT obviously absurd
-// 4. Return ONLY valid JSON, no \`\`\`json blocks
-
-// EXAMPLE (Finnish/English, 2 replicas):
-// {
-//   "target": ["Hei! Mitä sinä haluat?", "Haluaisin yhden kahvin, kiitos."],
-//   "native": ["Hi! What do you want?", "I would like one coffee, please."],
-//   "options": [
-//     ["Hi! What do you want?", "Goodbye!", "How are you?", "What time is it?"],
-//     ["I would like one coffee, please.", "I don't like coffee.", "Where is the cafe?", "I'm tired."]
-//   ]
-// }`;
-
 // Формируем промпт для Groq по структуре ROLE → CONTEXT → TASK → CONSTRAINTS → FORMAT
 const systemPrompt = `### ROLE
 You are an expert language learning content creator specializing in CEFR-aligned conversational dialogs. Your communication style is precise and pedagogically sound.
@@ -203,7 +143,10 @@ Distractors should be:
 - Do NOT use obvious or joke distractors
 - Use ONLY double quotes (") for JSON strings
 - If quotes are needed inside text, use single quotes (')
-- All 3 arrays must have EXACTLY ${replicas} items
+- CRITICAL: All 3 arrays ("target", "native", "options") MUST have EXACTLY ${replicas} elements
+- CRITICAL: NO extra elements beyond ${replicas} in any array
+- CRITICAL: Each element in "options" must be an array of exactly 4 strings
+- CRITICAL: NO null, undefined, or empty values anywhere in the JSON
 
 ### FORMAT
 Return ONLY valid JSON in this exact structure:
@@ -300,6 +243,47 @@ Example for Finnish/English, 2 exchanges:
         return opts;
       });
     // ====================================================
+
+    // ========== ДОБАВИТЬ ЭТУ ВАЛИДАЦИЮ ==========
+  // Проверяем длины массивов
+  if (content.target.length !== content.native.length) {
+    console.error('❌ Array length mismatch: target=' + content.target.length + ', native=' + content.native.length);
+    throw new Error('Target and native arrays must have the same length');
+  }
+
+  if (content.target.length !== content.options.length) {
+    console.error('❌ Array length mismatch: target=' + content.target.length + ', options=' + content.options.length);
+    
+    // Исправляем автоматически: обрезаем лишние или добавляем недостающие
+    if (content.options.length > content.target.length) {
+      console.log('⚠️ Trimming extra options elements');
+      content.options = content.options.slice(0, content.target.length);
+    } else {
+      console.log('⚠️ Options array too short, cannot auto-fix');
+      throw new Error('Options array is shorter than target array');
+    }
+  }
+
+  // Проверяем на null в options
+  const hasNulls = content.options.some((opt: any) => 
+    opt === null || opt === undefined || (Array.isArray(opt) && opt.some((o: any) => o === null || o === undefined))
+  );
+
+  if (hasNulls) {
+    console.error('❌ Options array contains null/undefined values');
+    throw new Error('Options array contains invalid values');
+  }
+
+  // Проверяем что каждый элемент options - массив из 4 элементов
+  const invalidOptions = content.options.some((opt: any) => !Array.isArray(opt) || opt.length !== 4);
+  
+  if (invalidOptions) {
+    console.error('❌ Some options are not arrays of 4 elements');
+    throw new Error('Each options element must be an array of exactly 4 strings');
+  }
+
+  console.log('✅ Validation passed: target=' + content.target.length + ', native=' + content.native.length + ', options=' + content.options.length);
+  // ============================================
   
     } catch (parseError) {
       throw new Error("Failed to parse AI response: " + parseError.message);
@@ -314,7 +298,7 @@ Example for Finnish/English, 2 exchanges:
         level,
         target_language: targetLanguage,
         tone,
-        replicas_count: replicas,
+        replicas_count: content.target.length,
         required_words: words || null,
         content: content,
       })
