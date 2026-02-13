@@ -4,10 +4,10 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 const LEVEL_CONFIG = {
-  1: { icon: 'book-outline', label: 'Level 1', color: 'bg-info' },
-  2: { icon: 'mic-outline', label: 'Level 2', color: 'bg-info' },
-  3: { icon: 'language-outline', label: 'Level 3', color: 'bg-info' },
-  4: { icon: 'headset-outline', label: 'Level 4', color: 'bg-info' },
+  1: { icon: 'book', label: 'Level 1', color: 'bg-info' },
+  2: { icon: 'mic', label: 'Level 2', color: 'bg-info' },
+  3: { icon: 'language', label: 'Level 3', color: 'bg-info' },
+  4: { icon: 'headset', label: 'Level 4', color: 'bg-info' },
 };
 
 export default function TrainingButton({ level, dialogId, locked = false }) {

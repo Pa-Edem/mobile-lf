@@ -8,9 +8,12 @@ import {
 } from '@expo-google-fonts/roboto-condensed';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as NavigationBar from 'expo-navigation-bar';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
+// import { StatusBar } from 'expo-status-bar';
 import SplashScreenComponent from '../components/SplashScreen';
 import { SupabaseProvider, useSupabase } from '../contexts/SupabaseContext';
 import i18n from '../lib/i18n';
@@ -47,6 +50,14 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  // Режим "sticky immersive"
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+    }
+  }, []);
+
   const [appIsReady, setAppIsReady] = useState(false);
 
   const [fontsLoaded] = useFonts({

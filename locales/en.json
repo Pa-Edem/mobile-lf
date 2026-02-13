@@ -118,7 +118,10 @@
   },
   "common": {
     "comingSoon": "Coming Soon",
+    "confirm": "Confirm",
     "cancel": "Cancel",
+    "exit": "Exit",
+    "exitWithoutSaving": "Are you sure you want to exit? Progress will not be saved.",
     "delete": "Delete"
   },
   "upgrade": {
@@ -147,6 +150,18 @@
       "completion": {
         "title": "Level completed!",
         "message": "You have listened to the entire dialog.",
+        "backToDialog": "Back to dialog",
+        "repeatLevel": "Repeat level"
+      }
+    },
+    "level4": {
+      "title": "Listen and choose the correct translation.",
+      "progress": "Replica {{current}} of {{total}}",
+      "completion": {
+        "titleSuccess": "Level completed!",
+        "titleFailed": "Training completed!",
+        "messageSuccess": "You answered correctly on the first try.",
+        "messageFailed": "Keep practicing! Correct answers: {{correct}}/{{total}}",
         "backToDialog": "Back to dialog",
         "repeatLevel": "Repeat level"
       }

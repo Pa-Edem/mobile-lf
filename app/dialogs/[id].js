@@ -206,7 +206,7 @@ export default function ViewDialogScreen() {
       {/* Floating Play All Button */}
       <Pressable
         onPress={handlePlayAll}
-        className={`absolute bottom-40 right-8 w-14 h-14 rounded-full items-center justify-center shadow-lg ${
+        className={`absolute bottom-36 right-8 w-14 h-14 rounded-full items-center justify-center shadow-lg ${
           isPlaying
             ? 'bg-greenDefault active:bg-greenDark'
             : isPaused
@@ -225,7 +225,7 @@ export default function ViewDialogScreen() {
       </Pressable>
 
       {/* Footer - Training Levels (1x4) */}
-      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-12'>
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
         <View className='flex-row gap-3'>
           <TrainingButton level={1} dialogId={id} locked={false} />
           <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} />

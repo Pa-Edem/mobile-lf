@@ -12,13 +12,24 @@ import { Modal, Pressable, Text, View } from 'react-native';
  * @param {Function} props.onClose - Вернуться к диалогу
  * @param {Function} props.onRepeat - Повторить уровень
  */
-export default function CompletionModal({ visible, level, accuracy = null, onClose, onRepeat }) {
+export default function CompletionModal({
+  visible,
+  level,
+  accuracy = null,
+  isCompleted = false,
+  totalReplicas = 0,
+  onClose,
+  onRepeat,
+}) {
   const { t } = useTranslation();
 
   // Определяем текст в зависимости от уровня
   const getTitle = () => {
     if (level === 1) return t('training.level1.completion.title');
-    if (accuracy >= 80) return t('training.completion.excellent'); // Для level 2-4
+    if (level === 4) {
+      return isCompleted ? t('training.level4.completion.titleSuccess') : t('training.level4.completion.titleFailed');
+    }
+    if (accuracy >= 80) return t('training.completion.excellent');
     if (accuracy >= 50) return t('training.completion.good');
     return t('training.completion.completed');
   };
@@ -26,6 +37,12 @@ export default function CompletionModal({ visible, level, accuracy = null, onClo
   const getMessage = () => {
     if (level === 1) {
       return t('training.level1.completion.message');
+    }
+    if (level === 4) {
+      const correct = Math.round((accuracy * totalReplicas) / 100);
+      return isCompleted
+        ? t('training.level4.completion.messageSuccess')
+        : t('training.level4.completion.messageFailed', { correct, total: totalReplicas });
     }
     return t('training.completion.accuracy', { accuracy });
   };

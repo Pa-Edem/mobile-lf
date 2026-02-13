@@ -282,7 +282,7 @@ export default function Level1Training() {
       {/* </View> */}
       {/* </View> */}
 
-      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-12'>
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
         <View className='flex-row gap-3'>
           {/* 1. Выход */}
           <Pressable
