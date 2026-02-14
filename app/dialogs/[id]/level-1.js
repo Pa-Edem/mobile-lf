@@ -9,7 +9,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import CompletionModal from '../../../components/CompletionModal';
 import ReplicaCard from '../../../components/ReplicaCard';
 import { useAudioPlayer } from '../../../hooks/useAudioPlayer';
-import { useTrainingLogger } from '../../../hooks/useTrainingLogger';
 import { supabase } from '../../../lib/supabase';
 
 export default function Level1Training() {
@@ -19,13 +18,12 @@ export default function Level1Training() {
   const { t } = useTranslation();
 
   const { playSequence, stop } = useAudioPlayer();
-  const { saveTrainingLog } = useTrainingLogger();
 
   const [dialog, setDialog] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [replayCount, setReplayCount] = useState(0);
+  // const [replayCount, setReplayCount] = useState(0);
 
   // Загрузка диалога
   const loadDialog = useCallback(async () => {
@@ -90,14 +88,14 @@ export default function Level1Training() {
     // Задержка 0,5 сек перед воспроизведением
     setTimeout(async () => {
       await playSequence([text], dialog.target_language, 1.0);
-      setReplayCount((prev) => prev + 1);
+      // setReplayCount((prev) => prev + 1);
     }, 500);
   };
 
   // С начала (сброс без модалки)
   const handleRestart = async () => {
     // Сбрасываем состояние
-    setReplayCount(0);
+    // setReplayCount(0);
     startTimeRef.current = Date.now();
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
 
@@ -129,19 +127,19 @@ export default function Level1Training() {
       setIsCompleted(true);
 
       // Сохраняем результат
-      const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      await saveTrainingLog({
-        dialogId: id,
-        type: 'level_1',
-        accuracyScore: 100,
-        totalReplicas: totalReplicas,
-        correctReplicas: totalReplicas,
-        durationSeconds,
-        metadata: {
-          completed: true,
-          replays: replayCount,
-        },
-      });
+      // const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      // await saveTrainingLog({
+      //   dialogId: id,
+      //   type: 'level_1',
+      //   accuracyScore: 100,
+      //   totalReplicas: totalReplicas,
+      //   correctReplicas: totalReplicas,
+      //   durationSeconds,
+      //   metadata: {
+      //     completed: true,
+      //     replays: replayCount,
+      //   },
+      // });
 
       return;
     }
@@ -180,7 +178,7 @@ export default function Level1Training() {
     setIsCompleted(false);
     await stop();
     setVisibleCount(0);
-    setReplayCount(0);
+    // setReplayCount(0);
     startTimeRef.current = Date.now();
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
 
@@ -235,70 +233,23 @@ export default function Level1Training() {
       </ScrollView>
 
       {/* Footer - Control Buttons  */}
-      {/* <View className='bg-white border-t border-brdLight px-6 py-4 pb-14'> */}
-      {/* <View className='flex-row justify-around items-center'> */}
-      {/* 1. Выход */}
-      {/* <Pressable
-            onPress={handleExit}
-            className='w-14 h-14 rounded-full bg-warning items-center justify-center active:opacity-80'
-          >
-            <Ionicons name='checkbox-outline' size={28} color='#2e271f' />
-          </Pressable> */}
-
-      {/* 2. С начала */}
-      {/* <Pressable
-            onPress={handleRestart}
-            disabled={visibleCount === 0}
-            className={`w-14 h-14 rounded-full items-center justify-center ${
-              visibleCount === 0 ? 'bg-bgCard' : 'bg-info active:opacity-80'
-            }`}
-          >
-            <Ionicons name='repeat' size={32} color={visibleCount === 0 ? '#d6cec2' : 'white'} />
-          </Pressable> */}
-
-      {/* 3. Микрофон (disabled) */}
-      {/* <Pressable disabled className='w-14 h-14 rounded-full bg-bgCard items-center justify-center opacity-50'>
-            <Ionicons name='mic' size={28} color='#d6cec2' />
-          </Pressable> */}
-
-      {/* 4. Повтор текущей */}
-      {/* <Pressable
-            onPress={handlePlayCurrent}
-            disabled={visibleCount === 0}
-            className={`w-14 h-14 rounded-full items-center justify-center ${
-              visibleCount === 0 ? 'bg-bgCard' : 'bg-info active:opacity-80'
-            }`}
-          >
-            <Ionicons name='refresh' size={28} color={visibleCount === 0 ? '#d6cec2' : 'white'} />
-          </Pressable> */}
-
-      {/* 5. Следующая (зелёный) */}
-      {/* <Pressable
-            onPress={handleNext}
-            className='w-14 h-14 rounded-full bg-greenDark items-center justify-center active:opacity-80'
-          >
-            <Ionicons name='arrow-forward' size={28} color='white' />
-          </Pressable> */}
-      {/* </View> */}
-      {/* </View> */}
-
       <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
-        <View className='flex-row gap-3'>
+        <View className='flex-row gap-1'>
           {/* 1. Выход */}
           <Pressable
             onPress={handleExit}
-            className='w-16 h-16 rounded-full bg-warning items-center justify-center m-auto active:opacity-80'
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
           >
-            <Ionicons name='checkbox-outline' size={32} color='#2e271f' />
+            <Ionicons name='close' size={36} color='#0a5c18' />
           </Pressable>
 
           {/* 2. С начала */}
           <Pressable
             onPress={handleRestart}
             disabled={visibleCount === 0}
-            className='w-16 h-16 rounded-full bg-info items-center justify-center m-auto active:opacity-80'
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
           >
-            <Ionicons name='repeat' size={32} color='white' />
+            <Ionicons name='repeat' size={36} color='#0a5c18' />
           </Pressable>
 
           {/* 3. Микрофон (disabled) */}
@@ -310,17 +261,17 @@ export default function Level1Training() {
           <Pressable
             onPress={handlePlayCurrent}
             disabled={visibleCount === 0}
-            className='w-16 h-16 rounded-full bg-info items-center justify-center m-auto active:opacity-80'
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
           >
-            <Ionicons name='refresh' size={32} color='white' />
+            <Ionicons name='refresh' size={36} color='#0a5c18' />
           </Pressable>
 
           {/* 5. Следующая (зелёный) */}
           <Pressable
             onPress={handleNext}
-            className='w-16 h-16 rounded-full bg-greenDark items-center justify-center m-auto active:opacity-80'
+            className='w-16 h-16 rounded-full bg-success items-center justify-center m-auto active:opacity-80'
           >
-            <Ionicons name='arrow-forward' size={32} color='white' />
+            <Ionicons name='arrow-forward' size={36} color='#0a5c18' />
           </Pressable>
         </View>
       </View>

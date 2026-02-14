@@ -8,7 +8,7 @@ export default function UsageLimitsCard({ usage, collapsed, onToggle }) {
   const getPercentage = (used, total) => (used / total) * 100;
 
   return (
-    <View className={`bg-bgSide rounded-3xl p-4 border border-brdLight ${collapsed ? 'mb-4' : 'mb-6'}`}>
+    <View className={`bg-white rounded-3xl p-4 border border-brdLight ${collapsed ? 'mb-4' : 'mb-6'}`}>
       {/* Header */}
       <View className='flex-row items-center justify-between'>
         <View className='flex-row items-center'>

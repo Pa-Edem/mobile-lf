@@ -12,19 +12,13 @@ export function useTrainingLogger() {
 
   /**
    * Сохранить результат тренировки
-   *
-   * @param {Object} data
-   * @param {string} data.dialogId - ID диалога
-   * @param {string} data.type - Тип тренировки (level_1, level_2, level_3, level_4)
-   * @param {number} data.accuracyScore - Точность 0-100
-   * @param {number} data.totalReplicas - Всего реплик
-   * @param {number} data.correctReplicas - Правильных реплик
-   * @param {number} data.durationSeconds - Длительность в секундах
-   * @param {Object} data.metadata - Дополнительные данные (JSONB)
+   * Если запись существует - обновляет только если новая accuracy выше
    */
   const saveTrainingLog = async (data) => {
     setIsSaving(true);
     try {
+      console.log('💾 Saving training log:', data.type, 'accuracy:', data.accuracyScore);
+
       // Получаем текущего пользователя
       const {
         data: { user },
@@ -34,21 +28,86 @@ export function useTrainingLogger() {
         throw new Error('No authenticated user');
       }
 
-      const { error } = await supabase.from('training_logs').insert({
-        user_id: user.id,
-        dialog_id: data.dialogId,
-        type: data.type,
-        accuracy_score: data.accuracyScore,
-        total_replicas: data.totalReplicas,
-        correct_replicas: data.correctReplicas,
-        duration_seconds: data.durationSeconds,
-        metadata: data.metadata || {},
-      });
+      console.log('👤 User ID:', user.id);
+      console.log('📄 Dialog ID:', data.dialogId);
 
-      if (error) throw error;
+      // Проверяем существующую запись
+      const { data: existingLogs, error: fetchError } = await supabase
+        .from('training_logs')
+        .select('id, accuracy_score, completed_at')
+        .eq('user_id', user.id)
+        .eq('dialog_id', data.dialogId)
+        .eq('type', data.type)
+        .order('completed_at', { ascending: false });
 
-      console.log('✅ Training log saved:', data.type);
-      return { success: true };
+      if (fetchError) {
+        console.error('❌ Fetch error:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('🔍 Found existing logs:', existingLogs?.length || 0);
+      if (existingLogs && existingLogs.length > 0) {
+        console.log('📊 Best existing accuracy:', existingLogs[0].accuracy_score);
+      }
+
+      const newAccuracy = data.accuracyScore;
+      const existingLog = existingLogs && existingLogs.length > 0 ? existingLogs[0] : null;
+
+      if (existingLog) {
+        // Запись существует - обновляем только если accuracy выше
+        if (newAccuracy > existingLog.accuracy_score) {
+          console.log(`📈 Updating log ${existingLog.id}: ${existingLog.accuracy_score}% → ${newAccuracy}%`);
+
+          const { data: updated, error: updateError } = await supabase
+            .from('training_logs')
+            .update({
+              accuracy_score: newAccuracy,
+              total_replicas: data.totalReplicas,
+              correct_replicas: data.correctReplicas,
+              duration_seconds: data.durationSeconds,
+              metadata: data.metadata || {},
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', existingLog.id)
+            .select(); // ← ВАЖНО: добавляем .select() для получения результата
+
+          if (updateError) {
+            console.error('❌ Update error:', updateError);
+            throw updateError;
+          }
+
+          console.log('✅ Training log updated:', updated);
+          return { success: true, updated: true };
+        } else {
+          console.log(`⏭️ Not updating: current ${existingLog.accuracy_score}% >= new ${newAccuracy}%`);
+          return { success: true, updated: false };
+        }
+      } else {
+        // Записи нет - создаём новую
+        console.log(`➕ Creating new log: ${newAccuracy}%`);
+
+        const { data: inserted, error: insertError } = await supabase
+          .from('training_logs')
+          .insert({
+            user_id: user.id,
+            dialog_id: data.dialogId,
+            type: data.type,
+            accuracy_score: newAccuracy,
+            total_replicas: data.totalReplicas,
+            correct_replicas: data.correctReplicas,
+            duration_seconds: data.durationSeconds,
+            metadata: data.metadata || {},
+          })
+          .select(); // ← ВАЖНО: добавляем .select()
+
+        if (insertError) {
+          console.error('❌ Insert error:', insertError);
+          throw insertError;
+        }
+
+        console.log('✅ Training log created:', inserted);
+        return { success: true, created: true };
+      }
     } catch (error) {
       console.error('❌ Failed to save training log:', error);
       return { success: false, error };

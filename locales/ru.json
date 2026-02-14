@@ -158,19 +158,11 @@
       "title": "Слушайте реплику и выбирайте верный перевод.",
       "progress": "Реплика {{current}} из {{total}}",
       "completion": {
-        "titleSuccess": "Уровень завершён!",
-        "titleFailed": "Тренировка завершена!",
-        "messageSuccess": "Вы ответили правильно с первой попытки.",
-        "messageFailed": "Продолжайте тренироваться! Правильных: {{correct}}/{{total}}",
+        "title": "Уровень завершён!",
+        "message": "Ваша точность: {{accuracy}}%",
         "backToDialog": "Вернуться к диалогу",
         "repeatLevel": "Повторить уровень"
       }
-    },
-    "completion": {
-      "excellent": "Отлично!",
-      "good": "Хорошо!",
-      "completed": "Тренировка завершена!",
-      "accuracy": "Точность: {{accuracy}}%"
     }
   }
 }

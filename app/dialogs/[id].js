@@ -169,7 +169,7 @@ export default function ViewDialogScreen() {
       {/* Header */}
       <View className='bg-white border-b border-brdLight px-6 pt-8 pb-2'>
         <View className='flex-row items-center justify-between'>
-          <Pressable onPress={() => router.back()} className='mr-4'>
+          <Pressable onPress={() => router.back()} className='w-12 h-12 items-center justify-center mr-2'>
             <Ionicons name='arrow-back' size={24} color='hsl(29, 10%, 20%)' />
           </Pressable>
 
@@ -226,7 +226,7 @@ export default function ViewDialogScreen() {
 
       {/* Footer - Training Levels (1x4) */}
       <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
-        <View className='flex-row gap-3'>
+        <View className='flex-row gap-1'>
           <TrainingButton level={1} dialogId={id} locked={false} />
           <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} />
           <TrainingButton level={3} dialogId={id} locked={!hasProFeatures} />

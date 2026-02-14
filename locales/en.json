@@ -158,19 +158,11 @@
       "title": "Listen and choose the correct translation.",
       "progress": "Replica {{current}} of {{total}}",
       "completion": {
-        "titleSuccess": "Level completed!",
-        "titleFailed": "Training completed!",
-        "messageSuccess": "You answered correctly on the first try.",
-        "messageFailed": "Keep practicing! Correct answers: {{correct}}/{{total}}",
+        "title": "Level completed!",
+        "message": "Your accuracy: {{accuracy}}%",
         "backToDialog": "Back to dialog",
         "repeatLevel": "Repeat level"
       }
-    },
-    "completion": {
-      "excellent": "Excellent!",
-      "good": "Good!",
-      "completed": "Training completed!",
-      "accuracy": "Accuracy: {{accuracy}}%"
     }
   }
 }

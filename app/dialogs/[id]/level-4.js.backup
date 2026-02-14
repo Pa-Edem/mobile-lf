@@ -28,7 +28,7 @@ export default function Level4Training() {
   const [shuffledOptions, setShuffledOptions] = useState([]);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
-  const [finalAccuracy, setFinalAccuracy] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
 
   const startTimeRef = useRef(null);
@@ -166,29 +166,16 @@ export default function Level4Training() {
   const handleCompletion = async () => {
     await stop();
 
-    // Подсчитываем общее количество попыток
-    let totalAttempts = 0;
-    for (let i = 0; i < totalReplicas; i++) {
-      // Если нет записи в attempts - значит была 1 попытка (правильный ответ с первого раза)
-      totalAttempts += attempts[i] || 1;
-    }
-
-    // Accuracy: процент правильных ответов с первой попытки
-    // Идеал = totalReplicas (все с 1 попытки)
-    // Реальность = totalAttempts
-    const accuracy = Math.round((totalReplicas / totalAttempts) * 100);
-
-    console.log(`📊 Attempts by replica:`, attempts);
-    console.log(`📊 Total attempts: ${totalAttempts}`);
-    console.log(`📊 Accuracy: ${totalReplicas}/${totalAttempts} = ${accuracy}%`);
-
-    // Логика завершения уровня (для metadata.isCompleted)
     const maxErrors = Math.floor(totalReplicas / 10);
     const hasMultipleAttempts = Object.values(attempts).some((count) => count >= 2);
-    const isCompleted = wrongAnswers.length <= maxErrors && !hasMultipleAttempts;
+
+    const completed = wrongAnswers.length <= maxErrors && !hasMultipleAttempts;
+    setIsCompleted(completed);
+
+    const correctCount = totalReplicas - wrongAnswers.length;
+    const accuracy = Math.round((correctCount / totalReplicas) * 100);
 
     const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const correctCount = totalReplicas - wrongAnswers.length;
 
     await saveTrainingLog({
       dialogId: id,
@@ -200,13 +187,10 @@ export default function Level4Training() {
       metadata: {
         errors: wrongAnswers,
         attempts: attempts,
-        totalAttempts: totalAttempts,
-        isCompleted: isCompleted,
+        isCompleted: completed,
       },
     });
 
-    // Сохраняем accuracy для модалки
-    setFinalAccuracy(accuracy);
     setShowCompletion(true);
   };
 
@@ -314,7 +298,8 @@ export default function Level4Training() {
       <CompletionModal
         visible={showCompletion}
         level={4}
-        accuracy={finalAccuracy}
+        accuracy={Math.round(((totalReplicas - wrongAnswers.length) / totalReplicas) * 100)}
+        isCompleted={isCompleted}
         totalReplicas={totalReplicas}
         onClose={() => {
           setShowCompletion(false);

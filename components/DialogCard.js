@@ -1,3 +1,4 @@
+// components/DialogCard.js
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -6,8 +7,8 @@ export default function DialogCard({ dialog, onPress }) {
   const { t } = useTranslation();
 
   // Определяем статус тренировок из БД
-  const trainingStatus = {
-    level2: false, // TODO: проверять из training_logs
+  const trainingStatus = dialog.trainingStatus || {
+    level2: false,
     level3: false,
     level4: false,
   };

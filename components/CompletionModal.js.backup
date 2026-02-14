@@ -12,15 +12,23 @@ import { Modal, Pressable, Text, View } from 'react-native';
  * @param {Function} props.onClose - Вернуться к диалогу
  * @param {Function} props.onRepeat - Повторить уровень
  */
-export default function CompletionModal({ visible, level, accuracy = null, onClose, onRepeat }) {
+export default function CompletionModal({
+  visible,
+  level,
+  accuracy = null,
+  isCompleted = false,
+  totalReplicas = 0,
+  onClose,
+  onRepeat,
+}) {
   const { t } = useTranslation();
 
   // Определяем текст в зависимости от уровня
   const getTitle = () => {
     if (level === 1) return t('training.level1.completion.title');
-    if (level === 4) return t('training.level4.completion.title');
-
-    // Для Level 2-3 (пока не реализованы)
+    if (level === 4) {
+      return isCompleted ? t('training.level4.completion.titleSuccess') : t('training.level4.completion.titleFailed');
+    }
     if (accuracy >= 80) return t('training.completion.excellent');
     if (accuracy >= 50) return t('training.completion.good');
     return t('training.completion.completed');
@@ -31,21 +39,16 @@ export default function CompletionModal({ visible, level, accuracy = null, onClo
       return t('training.level1.completion.message');
     }
     if (level === 4) {
-      return t('training.level4.completion.message', { accuracy });
+      const correct = Math.round((accuracy * totalReplicas) / 100);
+      return isCompleted
+        ? t('training.level4.completion.messageSuccess')
+        : t('training.level4.completion.messageFailed', { correct, total: totalReplicas });
     }
-
-    // Для Level 2-3
     return t('training.completion.accuracy', { accuracy });
   };
 
   const getEmoji = () => {
     if (level === 1) return '🎉';
-    if (level === 4) {
-      if (accuracy >= 90) return '🎉';
-      if (accuracy >= 70) return '👍';
-      return '💪';
-    }
-
     if (accuracy >= 80) return '🎉';
     if (accuracy >= 50) return '👍';
     return '💪';

@@ -12,20 +12,20 @@ export default function AnswerButton({ text, onPress, state = 'default', disable
   // Определяем стили в зависимости от состояния
   const getButtonStyles = () => {
     if (state === 'correct') {
-      return 'bg-green-100 border-2 border-green-600';
+      return 'bg-success border-2 border-textSuccess';
     }
     if (state === 'wrong') {
-      return 'bg-red-100 border-2 border-red-600';
+      return 'bg-error border-2 border-textError';
     }
-    return 'bg-secondary border-2 border-brdDark';
+    return 'bg-bgSide border-2 border-brdLight';
   };
 
   const getTextStyles = () => {
     if (state === 'correct') {
-      return 'text-green-800';
+      return 'text-textSuccess';
     }
     if (state === 'wrong') {
-      return 'text-red-800';
+      return 'text-textError';
     }
     return 'text-textHead';
   };
@@ -34,7 +34,7 @@ export default function AnswerButton({ text, onPress, state = 'default', disable
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`py-6 px-4 rounded-2xl mb-3 ${getButtonStyles()} ${disabled ? 'opacity-50' : 'active:opacity-80'}`}
+      className={`items-center justify-center min-h-24 py-4 px-4 rounded-2xl mb-3 ${getButtonStyles()}`}
     >
       <Text className={`text-base text-center ${getTextStyles()}`} style={{ fontFamily: 'RobotoCondensed_500Medium' }}>
         {text}

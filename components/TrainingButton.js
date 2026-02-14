@@ -4,10 +4,10 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 const LEVEL_CONFIG = {
-  1: { icon: 'book', label: 'Level 1', color: 'bg-info' },
-  2: { icon: 'mic', label: 'Level 2', color: 'bg-info' },
-  3: { icon: 'language', label: 'Level 3', color: 'bg-info' },
-  4: { icon: 'headset', label: 'Level 4', color: 'bg-info' },
+  1: { icon: 'book', label: 'Level 1', color: 'bg-bgSide' },
+  2: { icon: 'mic', label: 'Level 2', color: 'bg-bgSide' },
+  3: { icon: 'language', label: 'Level 3', color: 'bg-bgSide' },
+  4: { icon: 'headset', label: 'Level 4', color: 'bg-bgSide' },
 };
 
 export default function TrainingButton({ level, dialogId, locked = false }) {
@@ -26,12 +26,12 @@ export default function TrainingButton({ level, dialogId, locked = false }) {
     <Pressable
       onPress={handlePress}
       className={`
-         p-4 w-16 h-16 rounded-full items-center justify-center m-auto
-        ${locked ? 'bg-bgCard' : config.color + ' active:opacity-80'}
+         p-1 w-16 h-16 rounded-full items-center justify-center m-auto
+        ${locked ? 'bg-bgSide' : config.color + ' active:opacity-80'}
       `}
     >
       <View className='flex-row items-center'>
-        <Ionicons name={config.icon} size={24} color={locked ? '#c2b3a3' : 'white'} />
+        <Ionicons name={config.icon} size={32} color={locked ? '#d6cec2' : '#0a5c18'} />
         {/* <Text
           className={`ml-2 font-bold ${locked ? 'text-gray-400' : 'text-white'}`}
           style={{ fontFamily: 'RobotoCondensed_700Bold' }}

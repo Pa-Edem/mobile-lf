@@ -56,7 +56,7 @@ export default function MainScreen() {
       // Загружаем диалоги
       const { data: dialogsData, error: dialogsError } = await supabase
         .from('dialogs')
-        .select(`*, training_logs (type, metadata)`)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -116,36 +116,7 @@ export default function MainScreen() {
         },
       });
 
-      // Обрабатываем статусы тренировок
-      const processedDialogs = (dialogsData || []).map((dialog) => {
-        const trainingStatus = {
-          level2: false,
-          level3: false,
-          level4: false,
-        };
-
-        // Проверяем каждую запись training_logs
-        if (dialog.training_logs && dialog.training_logs.length > 0) {
-          dialog.training_logs.forEach((log) => {
-            if (log.type === 'level_2' && log.metadata?.isCompleted === true) {
-              trainingStatus.level2 = true;
-            }
-            if (log.type === 'level_3' && log.metadata?.isCompleted === true) {
-              trainingStatus.level3 = true;
-            }
-            if (log.type === 'level_4' && log.metadata?.isCompleted === true) {
-              trainingStatus.level4 = true;
-            }
-          });
-        }
-
-        return {
-          ...dialog,
-          trainingStatus,
-        };
-      });
-
-      setDialogs(processedDialogs);
+      setDialogs(dialogsData || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
