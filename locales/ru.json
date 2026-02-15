@@ -59,10 +59,12 @@
   },
   "main": {
     "title": "Lingua Flow",
-    "usageLimits": "ЛИМИТЫ ИСПОЛЬЗОВАНИЯ",
+    "usageLimits": "Лимиты использования",
     "generations": "ГЕНЕРАЦИИ",
     "proFeatures": "PRO ФУНКЦИИ",
     "savedDialogs": "СОХРАНЁННЫЕ ДИАЛОГИ",
+    "availableToday": "Доступно сегодня",
+    "unlimited": "Безлимитно",
     "lines": "строк",
     "endOfDialogs": "КОНЕЦ СПИСКА ДИАЛОГОВ"
   },
@@ -141,7 +143,11 @@
     "delete": "Удалить диалог",
     "deleteTitle": "Удалить диалог?",
     "deleteMessage": "Это действие нельзя отменить",
-    "deleted": "Диалог удалён"
+    "deleted": "Диалог удалён",
+    "level1": "Учить",
+    "level2": "Говорить",
+    "level3": "Переводить",
+    "level4": "Слушать"
   },
   "training": {
     "level1": {

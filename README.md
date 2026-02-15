@@ -77,7 +77,7 @@ lib/              # Utilities and configs
 ## 🗓️ Development Roadmap
 
 - [x] Phase 1: Foundation (Auth, Navigation) - 2 weeks
-- [ ] Phase 2: Core Features (Dialog Generation) - 3-4 weeks
+- [x] Phase 2: Core Features (Dialog Generation) - 3-4 weeks
 - [ ] Phase 3: Training System (4 levels) - 3-4 weeks
 - [ ] Phase 4: Monetization (Stripe, Trial) - 2-3 weeks
 - [ ] Phase 5: Polish (Stats, Settings) - 1-2 weeks
@@ -92,4 +92,4 @@ Pa-Edem - [@Pa-Edem](https://github.com/Pa-Edem)
 
 ---
 
-**Status:** 🚧 In Development (Phase 1)
+**Status:** 🚧 In Development (Phase 3)

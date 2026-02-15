@@ -225,7 +225,7 @@ export default function ViewDialogScreen() {
       </Pressable>
 
       {/* Footer - Training Levels (1x4) */}
-      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-6'>
         <View className='flex-row gap-1'>
           <TrainingButton level={1} dialogId={id} locked={false} />
           <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} />

@@ -59,10 +59,12 @@
   },
   "main": {
     "title": "Lingua Flow",
-    "usageLimits": "USAGE LIMITS",
+    "usageLimits": "Usage limits",
     "generations": "GENERATIONS",
     "proFeatures": "PRO FEATURES",
     "savedDialogs": "SAVED DIALOGS",
+    "availableToday": "Available today",
+    "unlimited": "Unlimited",
     "lines": "lines",
     "endOfDialogs": "END OF RECENT DIALOGS"
   },

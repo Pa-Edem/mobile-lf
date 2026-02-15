@@ -1,0 +1,131 @@
+// lib/planUtils.js
+
+/**
+ * Определяет эффективный план пользователя
+ * Приоритет:
+ * 1. manual_premium
+ * 2. manual_pro
+ * 3. is_trial_active (7-дневный Trial)
+ * 4. subscription_tier (реальная подписка из Stripe)
+ *
+ * @param {Object} profile - профиль пользователя
+ * @returns {string} - 'free', 'pro', или 'premium'
+ */
+export function getEffectivePlan(profile) {
+  if (!profile) return 'free';
+
+  if (profile.manual_premium) return 'premium';
+  if (profile.manual_pro) return 'pro';
+  if (profile.is_trial_active) return 'pro';
+
+  return profile.subscription_tier || 'free';
+}
+
+/**
+ * Возвращает лимиты для плана
+ *
+ * @param {string} plan - 'free', 'pro', или 'premium'
+ * @returns {Object} - объект с лимитами
+ */
+export function getPlanLimits(plan) {
+  const limits = {
+    free: {
+      generations: 2, // Базовый дневной лимит
+      dailyMax: 4, // Максимум с carry-over
+      weeklyMax: 10, // Недельный cap
+      proFeatures: 4, // PRO функции (Level 2, 3)
+      proFeaturesMax: 8,
+      proFeaturesWeekly: 20,
+      dialogs: 4, // Максимум сохранённых диалогов
+    },
+    pro: {
+      generations: 5,
+      dailyMax: 10,
+      weeklyMax: 25,
+      proFeatures: 10,
+      proFeaturesMax: 20,
+      proFeaturesWeekly: 50,
+      dialogs: 10,
+    },
+    premium: {
+      generations: 10,
+      dailyMax: 20,
+      weeklyMax: 50,
+      proFeatures: 999999,
+      proFeaturesMax: 999999,
+      proFeaturesWeekly: 999999,
+      dialogs: 50,
+    },
+  };
+
+  return limits[plan] || limits.free;
+}
+
+/**
+ * Проверяет может ли пользователь генерировать диалог
+ *
+ * @param {Object} usageData - данные из usage_counters
+ * @param {Object} profile - профиль пользователя
+ * @returns {boolean} - true если может генерировать
+ */
+export function canGenerateDialog(usageData, profile) {
+  const plan = getEffectivePlan(profile);
+  const limits = getPlanLimits(plan);
+
+  const dailyUsed = usageData?.daily_generations_used || 0;
+  const weeklyUsed = usageData?.weekly_generations_used || 0;
+  const carryOver = usageData?.carry_over_generations || 0;
+  const savedDialogs = usageData?.total_dialogs_count || 0;
+
+  // Доступно = базовый лимит + carry-over - использовано
+  const dailyAvailable = limits.generations + carryOver - dailyUsed;
+
+  // Проверяем дневной лимит, недельный лимит И количество сохранённых диалогов
+  return dailyAvailable > 0 && weeklyUsed < limits.weeklyMax && savedDialogs < limits.dialogs;
+}
+
+/**
+ * Проверяет может ли пользователь использовать PRO функции (Level 2, 3)
+ *
+ * @param {Object} usageData - данные из usage_counters
+ * @param {Object} profile - профиль пользователя
+ * @returns {boolean} - true если может использовать
+ */
+export function canUseProFeatures(usageData, profile) {
+  const plan = getEffectivePlan(profile);
+  const limits = getPlanLimits(plan);
+
+  // PREMIUM - безлимит
+  if (plan === 'premium') return true;
+
+  // PRO и FREE - проверяем лимиты
+  const dailyUsed = usageData?.daily_pro_features_used || 0;
+  const weeklyUsed = usageData?.weekly_pro_features_used || 0;
+  const carryOver = usageData?.carry_over_pro_features || 0;
+
+  const dailyAvailable = limits.proFeatures + carryOver - dailyUsed;
+
+  return dailyAvailable > 0 && weeklyUsed < limits.proFeaturesWeekly;
+}
+
+/**
+ * Получает информацию о плане в удобном формате
+ *
+ * @param {Object} profile - профиль пользователя
+ * @returns {Object} - объект с информацией о плане
+ */
+export function getPlanInfo(profile) {
+  const plan = getEffectivePlan(profile);
+  const limits = getPlanLimits(plan);
+
+  const isManual = profile?.manual_premium || profile?.manual_pro;
+  const isTrial = profile?.is_trial_active && !isManual;
+
+  return {
+    plan,
+    limits,
+    isManual,
+    isTrial,
+    displayName: plan.toUpperCase(),
+  };
+}

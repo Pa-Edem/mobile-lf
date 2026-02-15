@@ -10,7 +10,13 @@ import DialogCard from '../../components/DialogCard';
 import EmptyState from '../../components/EmptyState';
 import UpgradeModal from '../../components/UpgradeModal';
 import UsageLimitsCard from '../../components/UsageLimitsCard';
-import { canGenerateDialog, getEffectivePlan, getPlanLimits } from '../../lib/planUtils';
+import {
+  canGenerateDialog,
+  getAvailableGenerations,
+  getAvailableProFeatures,
+  getEffectivePlan,
+  getPlanLimits,
+} from '../../lib/planUtils';
 import { supabase } from '../../lib/supabase';
 
 // Группируем диалоги по уровням (A2.1 + A2.2 = A2)
@@ -34,7 +40,11 @@ export default function MainScreen() {
   const { t } = useTranslation();
   const [limitsCollapsed, setLimitsCollapsed] = useState(false);
   const [dialogs, setDialogs] = useState([]);
-  const [usage, setUsage] = useState(null);
+
+  const [usageData, setUsageData] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+  const [planLimits, setPlanLimits] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [canGenerate, setCanGenerate] = useState(true);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
@@ -44,7 +54,6 @@ export default function MainScreen() {
     try {
       setLoading(true);
 
-      // Получаем текущего пользователя
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -53,7 +62,7 @@ export default function MainScreen() {
         return;
       }
 
-      // Загружаем диалоги
+      // Загружаем диалоги с training_logs
       const { data: dialogsData, error: dialogsError } = await supabase
         .from('dialogs')
         .select(`*, training_logs (type, metadata)`)
@@ -74,15 +83,15 @@ export default function MainScreen() {
       }
 
       // Получаем профиль
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('subscription_tier, is_trial_active, manual_pro, manual_premium')
-        .eq('id', user.id)
-        .single();
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
       // Определяем эффективный план и его лимиты
       const plan = getEffectivePlan(profileData);
       const planLimits = getPlanLimits(plan);
+
+      // Рассчитываем доступные ресурсы
+      const availableGens = getAvailableGenerations(usageData, profileData);
+      const availablePro = getAvailableProFeatures(usageData, profileData);
 
       // Проверяем возможность генерации
       const canGen = canGenerateDialog(usageData, profileData);
@@ -93,28 +102,30 @@ export default function MainScreen() {
         setUpgradeModalShown(false);
       }
 
-      // DEBUG: Логируем для отладки
+      // Логируем для отладки
       console.log('=======================');
-      console.log('canGenerate:', canGen);
-      console.log('daily_generations_used:', usageData?.daily_generations_used);
-      console.log('plan:', plan);
+      console.log('Plan:', plan);
+      console.log('Limits:', planLimits);
+      console.log('Available generations:', availableGens);
+      console.log('Available PRO features:', availablePro);
+      console.log('Can generate:', canGen);
       console.log('=======================');
 
       // Устанавливаем лимиты для UI
-      setUsage({
-        generations: {
-          used: usageData?.daily_generations_used || 0,
-          total: planLimits.generations,
-        },
-        proFeatures: {
-          used: usageData?.daily_pro_features_used || 0,
-          total: planLimits.proFeatures,
-        },
-        savedDialogs: {
-          used: usageData?.total_dialogs_count || 0,
-          total: planLimits.dialogs,
-        },
-      });
+      // setUsage({
+      //   generations: {
+      //     used: usageData?.daily_generations_used || 0,
+      //     total: planLimits.generations,
+      //   },
+      //   proFeatures: {
+      //     used: usageData?.daily_pro_features_used || 0,
+      //     total: planLimits.proFeatures,
+      //   },
+      //   savedDialogs: {
+      //     used: usageData?.total_dialogs_count || 0,
+      //     total: planLimits.dialogs,
+      //   },
+      // });
 
       // Обрабатываем статусы тренировок
       const processedDialogs = (dialogsData || []).map((dialog) => {
@@ -146,6 +157,11 @@ export default function MainScreen() {
       });
 
       setDialogs(processedDialogs);
+      // ========== СОХРАНЯЕМ ДЛЯ UsageLimitsCard ==========
+      setUsageData(usageData);
+      setProfileData(profileData);
+      setPlanLimits(planLimits);
+      // ===================================================
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -248,9 +264,13 @@ export default function MainScreen() {
           }
         >
           {/* Usage Limits */}
-          {usage && (
+          {usageData && profileData && planLimits && (
             <UsageLimitsCard
-              usage={usage}
+              usage={usageData}
+              profile={profileData}
+              limits={planLimits}
+              availableGenerations={getAvailableGenerations(usageData, profileData)}
+              availableProFeatures={getAvailableProFeatures(usageData, profileData)}
               collapsed={limitsCollapsed}
               onToggle={() => setLimitsCollapsed(!limitsCollapsed)}
             />
