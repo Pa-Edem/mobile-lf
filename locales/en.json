@@ -156,6 +156,34 @@
         "repeatLevel": "Repeat level"
       }
     },
+    "level2": {
+      "title": "Repeat the phrase aloud",
+      "progress": "Phrase {{current}} of {{total}}",
+      "original": "Original",
+      "youSaid": "You said",
+      "accuracy": "Accuracy",
+      "tapToRecord": "Tap to record",
+      "recording": "Recording...",
+      "processing": "Processing...",
+      "tryAgain": "Try again",
+      "nextReplica": "Next",
+      "completion": {
+        "title": "Level completed!",
+        "message": "Average accuracy: {{accuracy}}%",
+        "messageFailed": "One phrase below 50% (minimum: {{minAccuracy}}%)",
+        "messageNotEnough": "Average accuracy {{accuracy}}% (need ≥70%)",
+        "backToDialog": "Back to dialog",
+        "repeatLevel": "Repeat level"
+      },
+      "errors": {
+        "micPermission": "Please allow microphone access",
+        "recordingFailed": "Failed to record audio",
+        "recognitionFailed": "Failed to recognize speech",
+        "networkError": "Check your internet connection",
+        "rateLimitExceeded": "Rate limit exceeded. Try again in a minute.",
+        "proLimitReached": "PRO features limit reached"
+      }
+    },
     "level4": {
       "title": "Listen and choose the correct translation.",
       "progress": "Replica {{current}} of {{total}}",

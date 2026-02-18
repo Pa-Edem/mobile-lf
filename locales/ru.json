@@ -160,6 +160,34 @@
         "repeatLevel": "Повторить уровень"
       }
     },
+    "level2": {
+      "title": "Повторите реплику вслух",
+      "progress": "Реплика {{current}} из {{total}}",
+      "original": "Оригинал",
+      "youSaid": "Вы сказали",
+      "accuracy": "Точность",
+      "tapToRecord": "Нажмите чтобы записать",
+      "recording": "Идёт запись...",
+      "processing": "Распознавание...",
+      "tryAgain": "Попробовать ещё",
+      "nextReplica": "Следующая",
+      "completion": {
+        "title": "Уровень завершён!",
+        "message": "Средняя точность: {{accuracy}}%",
+        "messageFailed": "Одна из реплик ниже 50% (минимум: {{minAccuracy}}%)",
+        "messageNotEnough": "Средняя точность {{accuracy}}% (нужно ≥70%)",
+        "backToDialog": "Вернуться к диалогу",
+        "repeatLevel": "Повторить уровень"
+      },
+      "errors": {
+        "micPermission": "Разрешите доступ к микрофону",
+        "recordingFailed": "Не удалось записать аудио",
+        "recognitionFailed": "Не удалось распознать речь",
+        "networkError": "Проверьте подключение к интернету",
+        "rateLimitExceeded": "Превышен лимит запросов. Попробуйте через минуту.",
+        "proLimitReached": "Лимит PRO-функций исчерпан"
+      }
+    },
     "level4": {
       "title": "Слушайте реплику и выбирайте верный перевод.",
       "progress": "Реплика {{current}} из {{total}}",
