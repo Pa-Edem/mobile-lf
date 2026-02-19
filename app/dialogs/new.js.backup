@@ -33,71 +33,8 @@ export default function CreateDialogScreen() {
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // const handleGenerate = async () => {
-  //   if (!topic.trim()) {
-  //     Alert.alert(t('common.error'), t('createDialog.topicRequired'));
-  //     return;
-  //   }
-
-  //   setIsGenerating(true);
-
-  //   try {
-  //     const {
-  //       data: { session },
-  //       error: sessionError,
-  //     } = await supabase.auth.getSession();
-
-  //     console.log('Invoking generate-dialog with token:', session?.access_token?.substring(0, 20));
-
-  //     if (sessionError || !session) {
-  //       throw new Error('Not authenticated');
-  //     }
-
-  //     const { data: profileData, error: profileError } = await supabase
-  //       .from('profiles')
-  //       .select('target_language, ui_language')
-  //       .single();
-
-  //     if (profileError) throw new Error('Could not fetch profile');
-
-  //     const targetLanguage = profileData?.target_language || 'fi';
-  //     const uiLanguage = profileData?.ui_language || 'en';
-
-  //     const { data, error: functionError } = await supabase.functions.invoke('generate-dialog', {
-  //       headers: {
-  //         Authorization: `Bearer ${session.access_token}`,
-  //       },
-  //       body: {
-  //         topic: topic.trim(),
-  //         words: words.length > 0 ? words : null,
-  //         level,
-  //         tone,
-  //         replicas,
-  //         targetLanguage,
-  //         uiLanguage,
-  //       },
-  //     });
-
-  //     if (functionError) {
-  //       console.error('❌ Edge Function error:', functionError);
-  //       throw new Error(functionError.message || 'Generation failed');
-  //     }
-
-  //     if (!data?.success) {
-  //       throw new Error(data?.error || 'Generation failed');
-  //     }
-
-  //     console.log('✅ Dialog generated:', data.data);
-  //     router.replace(`/dialogs/${data.data.dialogId}`);
-  //   } catch (error) {
-  //     console.error('Generation error:', error);
-  //     Alert.alert(t('createDialog.error.title'), error.message || t('createDialog.error.message'));
-  //   } finally {
-  //     setIsGenerating(false);
-  //   }
-  // };
-
   const handleGenerate = async () => {
+    // Validation
     if (!topic.trim()) {
       Alert.alert(t('common.error'), t('createDialog.topicRequired'));
       return;
@@ -106,21 +43,7 @@ export default function CreateDialogScreen() {
     setIsGenerating(true);
 
     try {
-      console.log('🚀 Starting generation...');
-
-      // 1. Получаем сессию
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session?.access_token) {
-        throw new Error('Not authenticated');
-      }
-
-      console.log('✅ Token ready');
-
-      // 2. Получаем профиль
+      // 1. Получаем профиль (target_language + ui_language)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('target_language, ui_language')
@@ -131,38 +54,34 @@ export default function CreateDialogScreen() {
       const targetLanguage = profileData?.target_language || 'fi';
       const uiLanguage = profileData?.ui_language || 'en';
 
-      // 3. ПЕРЕДАЁМ ТОКЕН В BODY! (обходной путь)
-      const payload = {
-        token: session.access_token, // ← ТОКЕН В BODY!
-        topic: topic.trim(),
-        words: words.length > 0 ? words : null,
-        level,
-        tone,
-        replicas,
-        targetLanguage,
-        uiLanguage,
-      };
-
-      console.log('📡 Calling function...');
-
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-dialog', {
-        body: JSON.stringify(payload),
+      // 2. Вызываем функцию через SDK (Оно само добавит Bearer Token)
+      const { data, error: functionError } = await supabase.functions.invoke('generate-dialog', {
+        body: {
+          topic: topic.trim(),
+          words: words.length > 0 ? words : null,
+          level,
+          tone,
+          replicas,
+          targetLanguage,
+          uiLanguage,
+        },
       });
 
-      if (fnError) {
-        console.error('❌ Error:', fnError);
-        throw new Error(fnError.message || 'Function failed');
+      // 3. Обработка специфических ошибок Supabase Functions
+      if (functionError) {
+        console.error('❌ Edge Function error:', functionError);
+        throw new Error(functionError.message || 'Generation failed');
       }
 
-      if (!fnData?.success) {
-        throw new Error(fnData?.error || 'Generation failed');
+      if (!data?.success) {
+        throw new Error(data?.error || 'Generation failed');
       }
 
-      console.log('✅ Success:', fnData.data.dialogId);
-      router.replace(`/dialogs/${fnData.data.dialogId}`);
+      console.log('✅ Dialog generated:', data.data);
+      router.replace(`/dialogs/${data.data.dialogId}`);
     } catch (error) {
-      console.error('💥 Error:', error);
-      Alert.alert(t('createDialog.error.title'), error.message);
+      console.error('Generation error:', error);
+      Alert.alert(t('createDialog.error.title'), error.message || t('createDialog.error.message'));
     } finally {
       setIsGenerating(false);
     }
