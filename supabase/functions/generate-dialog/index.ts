@@ -154,14 +154,19 @@ Creating an interactive learning module:
 - Audience: Practice-oriented adult learners
 - Formality: ${tone}/10 (1 = very casual, 5 = neutral, 10 = very formal/official)
 
-### TASK & LOGIC
+### TASK & LOGIC (Chain-of-Thought)
 
 Complete the task, strictly adhering to the chain-of-thought proportions:
 
-1. **Vocabulary Generation:** Generate exactly ${vocabularyCount} thematic collocations (2-4 words). This is an extended list for vocabulary expansion.
-2. **Dialogue Creation:** Write a dialogue with exactly ${replicas} phrases between two speakers.
-3. **Vocabulary Integration:** Naturally use at least ${minUsedCollocations} collocations from the generated list in the dialogue. The remaining phrases from the vocabulary remain without examples.
-4. **Testing:** Create 4 translation options (1 correct + 3 distractors) for each phrase.
+1. **Vocabulary Generation:** Generate exactly ${vocabularyCount} thematic collocations (3-4 words). This is an extended list for vocabulary expansion.
+2. **Syntactic Variety:** When creating collocations, BE SURE to combine the following types of structures:
+- Verb + verb + object (e.g., "start mopping the floor")
+- Verb + adj. + object (e.g., "vacuum the old carpet")
+- Verb + object + adverb (e.g., "wipe the windows thoroughly")
+- Prepositional control structures (e.g., "clean under the table / behind the cabinet").
+3. **Dialogue Creation:** Write a dialogue with exactly ${replicas} phrases between two speakers.
+4. **Vocabulary Integration:** Naturally use at least ${minUsedCollocations} collocations from the generated list in the dialogue. The remaining phrases from the vocabulary remain without examples.
+5. **Testing:** Create 4 translation options (1 correct + 3 distractors) for each phrase.
 
 ### LINGUISTIC & DYNAMIC CONSTRAINTS
 

@@ -1,3 +1,4 @@
+// components/UpgradeModal.js
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';

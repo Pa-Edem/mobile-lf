@@ -41,6 +41,7 @@ module.exports = {
         /* Белые/светлые для чатов */
         chatLeft: 'hsl(202, 76%, 95%)' /* Голубоватый белый */,
         chatRight: 'hsl(60, 85%, 95%)' /* Желтоватый белый */,
+        flipCard: 'hsl(130, 85%, 95%)' /* Зеленоватый белый */,
       },
       fontFamily: {
         roboto: ['RobotoCondensed_400Regular'],

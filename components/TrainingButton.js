@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 const LEVEL_CONFIG = {
+  0: { icon: 'list', label: 'viewDialog.level0', color: 'bg-bgSide' },
   1: { icon: 'book', label: 'viewDialog.level1', color: 'bg-bgSide' },
   2: { icon: 'mic', label: 'viewDialog.level2', color: 'bg-bgSide' },
   3: { icon: 'language', label: 'viewDialog.level3', color: 'bg-bgSide' },

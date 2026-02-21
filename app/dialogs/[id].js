@@ -227,8 +227,9 @@ export default function ViewDialogScreen() {
       {/* Footer - Training Levels (1x4) */}
       <View className='bg-white border-t border-brdLight px-6 pt-4 pb-6'>
         <View className='flex-row gap-1'>
+          <TrainingButton level={0} dialogId={id} locked={false} />
           <TrainingButton level={1} dialogId={id} locked={false} />
-          <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} />
+          {/* <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} /> */}
           <TrainingButton level={3} dialogId={id} locked={!hasProFeatures} />
           <TrainingButton level={4} dialogId={id} locked={false} />
         </View>

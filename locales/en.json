@@ -143,7 +143,12 @@
     "delete": "Delete dialog",
     "deleteTitle": "Delete dialog?",
     "deleteMessage": "This action cannot be undone",
-    "deleted": "Dialog deleted"
+    "deleted": "Dialog deleted",
+    "level0": "Vocabulary",
+    "level1": "Listen",
+    "level2": "Speak",
+    "level3": "Translate",
+    "level4": "Listen"
   },
   "training": {
     "level1": {
@@ -194,5 +199,22 @@
         "repeatLevel": "Repeat level"
       }
     }
+  },
+  "vocabulary": {
+    "title": "Vocabulary",
+    "startFlashcards": "Start Learning",
+    "collocations": "collocations",
+    "export": "Export",
+    "allWords": "All Words",
+    "tapToFlip": "Tap to flip",
+    "swipeHint": "← Swipe to navigate →",
+    "noCards": "No cards to study"
+  },
+  "export": {
+    "title": "Export Vocabulary",
+    "ankiCSV": "Anki CSV",
+    "ankiDescription": "Import to Anki/AnkiDroid",
+    "pdf": "PDF Document",
+    "pdfDescription": "Print or share"
   }
 }

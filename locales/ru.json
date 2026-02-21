@@ -144,6 +144,7 @@
     "deleteTitle": "Удалить диалог?",
     "deleteMessage": "Это действие нельзя отменить",
     "deleted": "Диалог удалён",
+    "level0": "Словарь",
     "level1": "Учить",
     "level2": "Говорить",
     "level3": "Переводить",
@@ -198,5 +199,22 @@
         "repeatLevel": "Повторить уровень"
       }
     }
+  },
+  "vocabulary": {
+    "title": "Словарь",
+    "startFlashcards": "Начать изучение",
+    "collocations": "словосочетаний",
+    "export": "Экспорт",
+    "allWords": "Все слова",
+    "tapToFlip": "Нажми, чтобы перевернуть",
+    "swipeHint": "← Свайп для навигации →",
+    "noCards": "Нет карточек для изучения"
+  },
+  "export": {
+    "title": "Экспорт словаря",
+    "ankiCSV": "Anki CSV",
+    "ankiDescription": "Импорт в Anki/AnkiDroid",
+    "pdf": "PDF документ",
+    "pdfDescription": "Для печати или отправки"
   }
 }
