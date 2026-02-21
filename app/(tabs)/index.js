@@ -82,6 +82,19 @@ export default function MainScreen() {
         throw usageError;
       }
 
+      // Если записи нет (новый пользователь или старый без usage_counters)
+      if (!usageData) {
+        console.log('⚠️ No usage_counters record found, creating...');
+        usageData = {
+          user_id: user.id,
+          daily_generations_used: 0,
+          daily_pro_features_used: 0,
+          total_dialogs_count: 0,
+          carry_over_generations: 0,
+          carry_over_pro_features: 0,
+        };
+      }
+
       // Получаем профиль
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
@@ -90,8 +103,8 @@ export default function MainScreen() {
       const planLimits = getPlanLimits(plan);
 
       // Рассчитываем доступные ресурсы
-      const availableGens = getAvailableGenerations(usageData, profileData);
-      const availablePro = getAvailableProFeatures(usageData, profileData);
+      // const availableGens = getAvailableGenerations(usageData, profileData);
+      // const availablePro = getAvailableProFeatures(usageData, profileData);
 
       // Проверяем возможность генерации
       const canGen = canGenerateDialog(usageData, profileData);
@@ -103,29 +116,12 @@ export default function MainScreen() {
       }
 
       // Логируем для отладки
-      console.log('=======================');
-      console.log('Plan:', plan);
-      console.log('Limits:', planLimits);
-      console.log('Available generations:', availableGens);
-      console.log('Available PRO features:', availablePro);
-      console.log('Can generate:', canGen);
-      console.log('=======================');
-
-      // Устанавливаем лимиты для UI
-      // setUsage({
-      //   generations: {
-      //     used: usageData?.daily_generations_used || 0,
-      //     total: planLimits.generations,
-      //   },
-      //   proFeatures: {
-      //     used: usageData?.daily_pro_features_used || 0,
-      //     total: planLimits.proFeatures,
-      //   },
-      //   savedDialogs: {
-      //     used: usageData?.total_dialogs_count || 0,
-      //     total: planLimits.dialogs,
-      //   },
-      // });
+      // console.log('=== MAIN SCREEN =======');
+      // console.log('Plan:', plan);
+      // console.log('Available generations:', availableGens);
+      // console.log('Available PRO features:', availablePro);
+      // console.log('Can generate:', canGen);
+      // console.log('=======================');
 
       // Обрабатываем статусы тренировок
       const processedDialogs = (dialogsData || []).map((dialog) => {
@@ -161,6 +157,11 @@ export default function MainScreen() {
       setUsageData(usageData);
       setProfileData(profileData);
       setPlanLimits(planLimits);
+      // console.log('=== SAVED STATE ===');
+      // console.log('usageData saved:', usageData ? 'YES' : 'NO');
+      // console.log('profileData saved:', profileData ? 'YES' : 'NO');
+      // console.log('planLimits saved:', planLimits);
+      // console.log('===================');
       // ===================================================
     } catch (error) {
       console.error('Error loading data:', error);
@@ -263,6 +264,13 @@ export default function MainScreen() {
             />
           }
         >
+          {/* ========== ДОБАВЬ ЭТО ========== */}
+          {/* {console.log('=== RENDER CHECK ===')}
+          {console.log('usageData:', usageData ? 'EXISTS' : 'NULL')}
+          {console.log('profileData:', profileData ? 'EXISTS' : 'NULL')}
+          {console.log('planLimits:', planLimits ? 'EXISTS' : 'NULL')}
+          {console.log('====================')} */}
+          {/* ================================ */}
           {/* Usage Limits */}
           {usageData && profileData && planLimits && (
             <UsageLimitsCard

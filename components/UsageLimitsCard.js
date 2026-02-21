@@ -32,12 +32,12 @@ export default function UsageLimitsCard({
 
   // Данные для генераций
   const generationsUsed = usage?.daily_generations_used || 0;
-  const generationsTotal = limits?.dailyMax || 0;
+  const generationsTotal = limits?.generations || 0;
   const generationsCarryOver = usage?.carry_over_generations || 0;
 
   // Данные для PRO функций
   const proFeaturesUsed = usage?.daily_pro_features_used || 0;
-  const proFeaturesTotal = limits?.proFeaturesMax || 0;
+  const proFeaturesTotal = limits?.proFeatures || 0;
   const proFeaturesCarryOver = usage?.carry_over_pro_features || 0;
 
   // Данные для сохранённых диалогов

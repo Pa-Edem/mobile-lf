@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const groqApiKey = Deno.env.get("GROQ_API_KEY") ?? "";
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
 
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       console.error("Missing Supabase environment variables");
@@ -99,14 +99,16 @@ console.log("✅ Token received (length:", token.length, ")");
     
     const { topic, words, level, tone, replicas, targetLanguage, uiLanguage } = body;
 
-    // Validate Groq key
-    if (!groqApiKey) {
-      console.error("GROQ_API_KEY not configured");
-      return new Response(JSON.stringify({ error: "AI key not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Validate Gemini key
+if (!geminiApiKey) {
+  console.error("GEMINI_API_KEY not configured");
+  return new Response(JSON.stringify({ error: "AI key not configured" }), {
+    status: 500,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+console.log("✅ Using Gemini 2.5 Flash");
 
     // Получаем профиль для языков
     const { data: profile } = await supabaseClient
@@ -139,181 +141,123 @@ const vocabularyCount = Math.ceil(replicas * 1.5);
 const minUsedCollocations = Math.floor(vocabularyCount * 0.67);
 
 const systemPrompt = `### ROLE
-You are an expert language learning content creator specializing in CEFR-aligned conversational dialogs and vocabulary acquisition. Your communication style is precise and pedagogically sound.
+
+You are an expert linguist and Senior Instructional Designer. Your specialty is creating educational content that complies with CEFR standards and combines grammatical accuracy with natural spoken language.
 
 ### CONTEXT
-I am creating language learning materials for students at ${level} level (CEFR scale). The target audience is adult learners who want to practice realistic everyday conversations in ${targetLanguageName}. Their native language is ${nativeLanguage}.
 
-The dialog theme is: "${topic}"
+Creating an interactive learning module:
 
-${words && words.length > 0 
-  ? `### MANDATORY VOCABULARY
-CRITICAL: You MUST use ALL of these words when creating collocations AND in the dialog:
-${words.map((word, i) => `${i + 1}. "${word}"`).join('\n')}
+- Level: ${level}
+- Language pair: ${targetLanguageName} (target) → ${nativeLanguage} (native)
+- Topic: "${topic}"
+- Audience: Practice-oriented adult learners
+- Formality: ${tone}/10 (1 = very casual, 5 = neutral, 10 = very formal/official)
 
-Requirements for mandatory words:
-- Create collocations that include these words
-- These collocations MUST appear in the dialog
-- The remaining collocations can be about the topic
-` 
+### TASK & LOGIC
+
+Complete the task, strictly adhering to the chain-of-thought proportions:
+
+1. **Vocabulary Generation:** Generate exactly ${vocabularyCount} thematic collocations (2-4 words). This is an extended list for vocabulary expansion.
+2. **Dialogue Creation:** Write a dialogue with exactly ${replicas} phrases between two speakers.
+3. **Vocabulary Integration:** Naturally use at least ${minUsedCollocations} collocations from the generated list in the dialogue. The remaining phrases from the vocabulary remain without examples.
+4. **Testing:** Create 4 translation options (1 correct + 3 distractors) for each phrase.
+
+### LINGUISTIC & DYNAMIC CONSTRAINTS
+
+- Line Length: Each phrase should be 1-2 sentences (5-15 words for natural flow)
+- Difficulty: Strictly correspond to ${level} level. For B2+, use common phrases and idioms; for A2, use basic structures
+- Formality: Match tone level ${tone}/10 in vocabulary choice and grammar
+- Distractors: Should appear logical and plausible. Avoid absurd or obviously stupid options
+  ${words && words.length > 0
+  ? `- Required Words: Integrate these words into collocations and dialogue: ${words.join(', ')}`
   : ''}
 
-### TASK STRUCTURE
-Your task has TWO stages:
+### TECHNICAL CONSTRAINTS
 
-STAGE 1: Generate ${vocabularyCount} common collocations related to "${topic}"
+- Format: Pure JSON only. No introduction, code blocks, or trailing text
+- Validation: The first element in each "options" array is always the correct answer (matching "native")
+- Characters: Double quotes only ("). Within text, use single quotes (')
+- Arrays: All arrays must have EXACT counts specified below
 
-Requirements:
-- Each collocation should be 2-3 words (NOT single words)
-${words && words.length > 0 
-  ? `- CRITICAL: At least ${words.length} collocations MUST include the mandatory words listed above` 
-  : ''}
-- Include diverse grammatical structures:
-  * verb + noun (e.g., "clean the room")
-  * adjective + noun (e.g., "wet mop")
-  * adverb + verb (e.g., "carefully wipe")
-  * noun + noun combinations
-- Make them practical and commonly used in everyday speech
-- Appropriate for ${level} proficiency level
+### OUTPUT FORMAT
 
-STAGE 2: Create a realistic conversation using these collocations
+CRITICAL VALIDATION:
 
-Requirements:
-- Exactly ${replicas} exchanges (alternating turns between two speakers)
-- Use at least ${minUsedCollocations} of the generated collocations naturally in the dialog
-${words && words.length > 0 
-  ? `- CRITICAL: ALL collocations containing mandatory words MUST appear in the dialog` 
-  : ''}
-- Each collocation used in dialog must have an "example" field with the exact sentence from dialog
+- "vocabulary" array: EXACTLY ${vocabularyCount} elements
+- "target" array: EXACTLY ${replicas} elements
+- "native" array: EXACTLY ${replicas} elements
+- "options" array: EXACTLY ${replicas} elements (each with 4 strings)
+- At least ${minUsedCollocations} vocabulary items must have "example" field filled with exact sentence from dialogue
 
-### REQUIREMENTS FOR DIALOG
-1. Vocabulary and grammar must match ${level} proficiency level
-2. Formality level: ${tone}/10 (1=very casual everyday speech, 5=neutral, 10=very formal/official)
-3. Conversation must feel authentic and useful for real-life situations
-4. Include common idioms and expressions that native speakers actually use
-5. Collocations must appear naturally, not forced
-${words && words.length > 0 
-  ? `6. CRITICAL: Every mandatory word must appear in the dialog through its collocation` 
-  : ''}
-${level.startsWith('B') || level.startsWith('C') 
-  ? `${words && words.length > 0 ? '7' : '6'}. For ${level} level: use colloquialisms, informal speech patterns, specialized terms, complex structures` 
-  : ''}
-
-For each dialog line, provide:
-- Original text in ${targetLanguageName}
-- Accurate translation in ${nativeLanguage}
-- 4 multiple-choice options (1 correct + 3 plausible distractors)
-
-Distractors should be:
-- Grammatically plausible
-- Similar vocabulary but wrong meaning
-- Common learner mistakes
-- NOT obviously absurd or nonsensical
-
-### CONSTRAINTS
-- Do NOT use markdown formatting (no \`\`\`json blocks)
-- Do NOT add explanations or preambles
-- Do NOT use obvious or joke distractors
-- Use ONLY double quotes (") for JSON strings
-- If quotes are needed inside text, use single quotes (')
-- CRITICAL: All 3 arrays ("target", "native", "options") MUST have EXACTLY ${replicas} elements
-- CRITICAL: NO extra elements beyond ${replicas} in any array
-- CRITICAL: Each element in "options" must be an array of exactly 4 strings
-- CRITICAL: The "vocabulary" array must have EXACTLY ${vocabularyCount} elements
-- CRITICAL: Each vocabulary item used in dialog MUST have "example" field with exact sentence
-${words && words.length > 0 
-  ? `- CRITICAL: At least ${words.length} collocations must contain the mandatory words` 
-  : ''}
-- CRITICAL: NO null, undefined, or empty values anywhere in the JSON
-
-### FORMAT
-Return ONLY valid JSON in this exact structure:
+Return ONLY this JSON structure:
 
 {
-  "vocabulary": [
-    {
-      "collocation": "collocation in ${targetLanguageName}",
-      "translation": "translation in ${nativeLanguage}",
-      "example": "exact sentence from dialog where this collocation appears"
-    }
-  ],
-  "target": ["First line in ${targetLanguageName}", "Second line in ${targetLanguageName}", ...],
-  "native": ["First translation in ${nativeLanguage}", "Second translation in ${nativeLanguage}", ...],
-  "options": [
-    ["CORRECT translation", "Plausible wrong option 1", "Plausible wrong option 2", "Plausible wrong option 3"],
-    ["CORRECT translation", "Plausible wrong option 1", "Plausible wrong option 2", "Plausible wrong option 3"],
-    ...
-  ]
+"vocabulary": [
+{
+"collocation": "phrase in ${targetLanguageName}",
+"translation": "translation in ${nativeLanguage}",
+"example": "exact sentence from dialogue where this appears (empty string '' if not used)"
+}
+],
+"target": ["Phrase 1 in ${targetLanguageName}", "Phrase 2 in ${targetLanguageName}", ...],
+"native": ["Translation 1 in ${nativeLanguage}", "Translation 2 in ${nativeLanguage}", ...],
+"options": [
+["CORRECT translation", "Plausible wrong 1", "Plausible wrong 2", "Plausible wrong 3"],
+["CORRECT translation", "Plausible wrong 1", "Plausible wrong 2", "Plausible wrong 3"],
+...
+]
+}
+`;
+
+    console.log("🤖 Calling Gemini 2.5 Flash API...");
+    const geminiResponse = await fetch(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: systemPrompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+      },
+    }),
+  }
+);
+
+    if (!geminiResponse.ok) {
+  const errText = await geminiResponse.text();
+  console.error("❌ Gemini error:", errText);
+  return new Response(JSON.stringify({ error: "AI generation failed" }), {
+    status: 502,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
-CRITICAL RULES:
-- The first item in each "options" array MUST be identical to the corresponding "native" translation
-- "vocabulary" array must have ${vocabularyCount} elements
-- At least ${minUsedCollocations} collocations must have "example" field filled
-${words && words.length > 0 
-  ? `- ALL ${words.length} collocations containing mandatory words MUST have "example" field filled
-- Collocations with mandatory words MUST actually appear in the "target" dialog lines` 
-  : ''}
-- Collocations with "example" field MUST actually appear in the "target" dialog lines
+const geminiData = await geminiResponse.json();
+const aiContent = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-Example for Finnish/Russian, 2 exchanges, topic "Уборка"${words && words.length > 0 ? ', mandatory words: "keittiö", "lattia"' : ''}:
-{
-  "vocabulary": [
-    {
-      "collocation": "siivota keittiö",
-      "translation": "убирать кухню",
-      "example": "Pitää siivota keittiö tänään."
-    },
-    {
-      "collocation": "likainen lattia",
-      "translation": "грязный пол",
-      "example": "Joo, lattia on aika likainen."
-    },
-    {
-      "collocation": "märkä moppi",
-      "translation": "влажная швабра",
-      "example": ""
-    }
-  ],
-  "target": ["Pitää siivota keittiö tänään.", "Joo, lattia on aika likainen."],
-  "native": ["Нужно убрать кухню сегодня.", "Да, пол довольно грязный."],
-  "options": [
-    ["Нужно убрать кухню сегодня.", "Кухня очень чистая.", "Где находится кухня?", "Я не люблю готовить."],
-    ["Да, пол довольно грязный.", "Нет, всё чисто.", "Пол новый.", "Я устал."]
-  ]
-}`;
+if (!aiContent) {
+  console.error("❌ Empty response from Gemini");
+  return new Response(JSON.stringify({ error: "Empty AI response" }), {
+    status: 502,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
-    console.log("🤖 Calling Groq API...");
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${groqApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate a dialog about: ${topic}` },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!groqResponse.ok) {
-      const errText = await groqResponse.text();
-      console.error("❌ Groq error:", errText);
-      return new Response(JSON.stringify({ error: "AI generation failed" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const groqData = await groqResponse.json();
-    const aiContent = groqData.choices?.[0]?.message?.content ?? "";
-
-    console.log("✅ AI response received");
+console.log("✅ Gemini response received");
 
     // Parse AI JSON
     const cleanContent = aiContent.replace(/```json\n?|\n?```/g, "").trim();
@@ -383,16 +327,41 @@ Example for Finnish/Russian, 2 exchanges, topic "Уборка"${words && words.l
     console.log("✅ Dialog saved:", dialog.id);
 
     // Update counters
-    try {
-      const { error: counterError } = await supabaseAdmin.rpc("increment", {
-        row_id: user.id,
-        column_name: "daily_generations_used",
-      });
-      if (counterError) console.warn("⚠️ Counter update failed:", counterError);
-      else console.log("✅ Counter updated");
-    } catch (e) {
-      console.warn("⚠️ Counter RPC failed", e);
+try {
+  // Сначала проверяем существует ли запись
+  const { data: existingCounter } = await supabaseAdmin
+    .from('usage_counters')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!existingCounter) {
+    // Создаём новую запись
+    console.log('📝 Creating usage_counters for user:', user.id);
+    await supabaseAdmin.from('usage_counters').insert({
+      user_id: user.id,
+      daily_generations_used: 1,
+      daily_pro_features_used: 0,
+      total_dialogs_count: 1,
+      carry_over_generations: 0,
+      carry_over_pro_features: 0,
+    });
+    console.log('✅ usage_counters created');
+  } else {
+    // Обновляем существующую через RPC
+    const { error: counterError } = await supabaseAdmin.rpc("increment", {
+      row_id: user.id,
+      column_name: "daily_generations_used",
+    });
+    if (counterError) {
+      console.warn("⚠️ Counter update failed:", counterError);
+    } else {
+      console.log("✅ Counter updated");
     }
+  }
+} catch (e) {
+  console.warn("⚠️ Counter update failed", e);
+}
 
     return new Response(
       JSON.stringify({ 
