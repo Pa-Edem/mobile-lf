@@ -1,8 +1,8 @@
 // components/TrainingButton.js
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+// import { useTranslation } from 'react-i18next';
+import { Pressable, View } from 'react-native';
 
 const LEVEL_CONFIG = {
   0: { icon: 'list', label: 'viewDialog.level0', color: 'bg-bgSide' },
@@ -13,7 +13,7 @@ const LEVEL_CONFIG = {
 };
 
 export default function TrainingButton({ level, dialogId, locked = false }) {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const config = LEVEL_CONFIG[level];
 
   const handlePress = () => {
@@ -31,15 +31,15 @@ export default function TrainingButton({ level, dialogId, locked = false }) {
         <Pressable
           onPress={handlePress}
           className={`
-         p-1 w-16 h-16 rounded-full items-center justify-center m-auto
+         p-1 w-14 h-14 rounded-full items-center justify-center m-auto
         ${locked ? 'bg-bgSide' : config.color + ' active:opacity-80'}
       `}
         >
           <View className='flex-row items-center'>
-            <Ionicons name={config.icon} size={32} color={locked ? '#d6cec2' : '#0a5c18'} />
+            <Ionicons name={config.icon} size={24} color={locked ? '#d6cec2' : '#0a5c18'} />
           </View>
         </Pressable>
-        <Text className='font-roboto text-xs items-center justify-center m-auto'>{t(`${config.label}`)}</Text>
+        {/* <Text className='font-roboto text-xs items-center justify-center m-auto'>{t(`${config.label}`)}</Text> */}
       </View>
     </View>
   );

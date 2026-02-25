@@ -279,7 +279,7 @@ export default function Level4Training() {
       </ScrollView>
 
       {/* Footer */}
-      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-10'>
         <View className='flex-row gap-3'>
           {/* 1. Выход */}
           <Pressable

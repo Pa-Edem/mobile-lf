@@ -1,114 +1,470 @@
 // app/dialogs/[id]/level-2.js
 import { Ionicons } from '@expo/vector-icons';
-import * as NavigationBar from 'expo-navigation-bar';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Speech from 'expo-speech';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import AccuracyResult from '../../../components/AccuracyResult';
+import { ActivityIndicator, PermissionsAndroid, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import CompletionModal from '../../../components/CompletionModal';
-import RecordButton from '../../../components/RecordButton';
-import { useAudioPlayer } from '../../../hooks/useAudioPlayer';
-import { useAudioRecorder } from '../../../hooks/useAudioRecorder';
-import { useProfile } from '../../../hooks/useProfile';
-import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition';
-import { useTrainingLogger } from '../../../hooks/useTrainingLogger';
-import { canUseProFeatures } from '../../../lib/planUtils';
+import ReplicaCard from '../../../components/ReplicaCard';
 import { supabase } from '../../../lib/supabase';
 
-export default function Level2Training() {
-  const { t } = useTranslation();
-  const { id } = useLocalSearchParams();
-
-  // Hooks
-  const { data: profile } = useProfile();
-  const { playSequence, stop } = useAudioPlayer();
-  const { startRecording, stopRecording, deleteRecording, deleteAllRecordings, isRecording } = useAudioRecorder();
-  const { recognizeSpeech, calculateAccuracy, isProcessing } = useSpeechRecognition();
-  const { saveTrainingLog } = useTrainingLogger();
-
-  // State
-  const [dialog, setDialog] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [replicaResults, setReplicaResults] = useState({});
-  const [showResult, setShowResult] = useState(false);
-  const [currentResult, setCurrentResult] = useState(null);
-  const [showCompletion, setShowCompletion] = useState(false);
-  const [finalAccuracy, setFinalAccuracy] = useState(0);
-  const [proFeaturesUsedInSession, setProFeaturesUsedInSession] = useState(0);
-  const [usageData, setUsageData] = useState(null);
-
-  const startTimeRef = useRef(Date.now());
-  const currentRecordingUri = useRef(null);
-
-  // Загрузка диалога и usage
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const loadData = useCallback(async () => {
+// Запрос разрешений на микрофон
+const requestPermissions = async () => {
+  if (Platform.OS === 'android') {
     try {
-      setLoading(true);
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
+        title: 'Microphone Permission',
+        message: 'Lingua Flow needs access to your microphone for speech recognition.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      });
 
-      // Загружаем диалог
-      const { data: dialogData, error: dialogError } = await supabase.from('dialogs').select('*').eq('id', id).single();
-
-      if (dialogError) throw dialogError;
-
-      setDialog(dialogData);
-
-      // Загружаем usage counters
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        const { data: usage } = await supabase.from('usage_counters').select('*').eq('user_id', user.id).single();
-
-        setUsageData(usage);
-
-        // Проверяем доступ к PRO функциям
-        if (!canUseProFeatures(usage, profile)) {
-          Alert.alert(t('training.level2.errors.proLimitReached'), t('common.upgradeToUnlock'), [
-            { text: t('common.cancel'), onPress: () => router.back() },
-            { text: t('common.upgrade'), onPress: () => router.push('/pricing') },
-          ]);
-        }
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('✅ Microphone permission granted');
+        return true;
+      } else {
+        console.log('❌ Microphone permission denied');
+        return false;
       }
+    } catch (err) {
+      console.warn('Permission error:', err);
+      return false;
+    }
+  }
+  return true; // iOS handled by Info.plist
+};
+
+/**
+ * Нормализация текста для сравнения
+ * Убирает знаки препинания, лишние пробелы, приводит к нижнему регистру
+ */
+function normalizeText(text) {
+  return text
+    .toLowerCase() // Нижний регистр
+    .replace(/[.,!?;:"""'''`—–-]/g, '') // Убрать знаки препинания
+    .replace(/\s+/g, ' ') // Множественные пробелы → один
+    .trim(); // Убрать пробелы по краям
+}
+
+/**
+ * Вычисление расстояния Левенштейна
+ */
+function levenshteinDistance(str1, str2) {
+  const track = Array(str2.length + 1)
+    .fill(null)
+    .map(() => Array(str1.length + 1).fill(null));
+
+  for (let i = 0; i <= str1.length; i++) track[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) track[j][0] = j;
+
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(track[j][i - 1] + 1, track[j - 1][i] + 1, track[j - 1][i - 1] + indicator);
+    }
+  }
+
+  return track[str2.length][str1.length];
+}
+
+/**
+ * Вычисление процента схожести
+ */
+function calculateSimilarity(original, spoken) {
+  // Нормализуем оба текста для сравнения
+  const normalizedOriginal = normalizeText(original);
+  const normalizedSpoken = normalizeText(spoken);
+
+  const distance = levenshteinDistance(normalizedOriginal, normalizedSpoken);
+  const maxLength = Math.max(normalizedOriginal.length, normalizedSpoken.length);
+  const similarity = ((maxLength - distance) / maxLength) * 100;
+  return Math.round(similarity);
+}
+
+/**
+ * Определение уровня оценки
+ */
+function getEvaluation(accuracy) {
+  if (accuracy >= 95) return { level: 'PERFECT', emoji: '✅', color: '#4caf50' };
+  if (accuracy >= 85) return { level: 'GOOD', emoji: '⚡', color: '#8bc34a' };
+  if (accuracy >= 70) return { level: 'CLOSE', emoji: '⚠️', color: '#ff9800' };
+  return { level: 'WRONG', emoji: '❌', color: '#f44336' };
+}
+
+/**
+ * Создаёт визуальный diff распознанного текста
+ * Берёт слова из spoken, но добавляет заглавные буквы и знаки из original
+ * Подсвечивает только те слова, которые отличаются
+ */
+function createVisualDiff(original, spoken) {
+  const origWords = original.split(/\s+/); // Оригинальные слова
+  const spokenWords = spoken.split(/\s+/); // Распознанные слова
+
+  const segments = [];
+  const maxLength = Math.max(origWords.length, spokenWords.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    const origWord = origWords[i] || '';
+    const spokenWord = spokenWords[i] || '';
+
+    // Нормализуем для сравнения
+    const normOrig = normalizeText(origWord);
+    const normSpoken = normalizeText(spokenWord);
+
+    const isError = normOrig !== normSpoken;
+
+    if (isError && spokenWord) {
+      // ОШИБКА - показываем то что сказал пользователь (с заглавной из оригинала)
+      const capitalizedSpoken = capitalizeAsOriginal(spokenWord, origWord);
+      segments.push({ text: capitalizedSpoken, isError: true });
+    } else if (spokenWord) {
+      // ПРАВИЛЬНО - показываем оригинал (с правильным регистром)
+      segments.push({ text: origWord || spokenWord, isError: false });
+    } else if (origWord && !spokenWord) {
+      // Пользователь пропустил слово - показываем пропуск
+      segments.push({ text: '[?]', isError: true });
+    }
+
+    // Добавляем пробел между словами
+    if (i < maxLength - 1) {
+      segments.push({ text: ' ', isError: false });
+    }
+  }
+
+  return segments;
+}
+
+/**
+ * Применяет регистр и знаки препинания из оригинала к распознанному слову
+ */
+function capitalizeAsOriginal(spoken, original) {
+  if (!original) return spoken;
+
+  let result = spoken;
+
+  // Если оригинал начинается с заглавной - делаем заглавную
+  if (original[0] === original[0].toUpperCase()) {
+    result = result.charAt(0).toUpperCase() + result.slice(1);
+  }
+
+  // Переносим знаки препинания из оригинала
+  const punctuation = original.match(/[.,!?;:"""'''`—–-]+$/);
+  if (punctuation) {
+    result += punctuation[0];
+  }
+
+  return result;
+}
+
+export default function Level2Training() {
+  const { id } = useLocalSearchParams();
+  const scrollViewRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const autoNextTimerRef = useRef(null);
+  const { t } = useTranslation();
+
+  const [dialog, setDialog] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognizedText, setRecognizedText] = useState('');
+  const [showResult, setShowResult] = useState(false);
+  const [currentAccuracy, setCurrentAccuracy] = useState(0);
+  const [results, setResults] = useState([]); // История результатов по каждой реплике
+
+  // Загрузка диалога
+  const loadDialog = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.from('dialogs').select('*').eq('id', id).single();
+
+      if (error) throw error;
+
+      setDialog(data);
+      startTimeRef.current = Date.now();
     } catch (error) {
-      console.error('Error loading data:', error);
-      Alert.alert(t('common.error'), error.message);
+      console.error('Load error:', error);
       router.back();
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [id, profile, t]);
+  }, [id]);
 
-  // Immersive mode для Android
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('inset-swipe');
-    }
+    loadDialog();
+  }, [loadDialog]);
+
+  // Остановка аудио при монтировании/размонтировании
+  useEffect(() => {
+    Speech.stop();
 
     return () => {
-      if (Platform.OS === 'android') {
-        NavigationBar.setVisibilityAsync('visible');
+      Speech.stop();
+      try {
+        ExpoSpeechRecognitionModule.stop();
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
+      // Очищаем таймер автоперехода
+      if (autoNextTimerRef.current) {
+        clearTimeout(autoNextTimerRef.current);
       }
     };
   }, []);
 
-  // Cleanup при размонтировании
+  // Показать первую реплику при загрузке
   useEffect(() => {
-    return () => {
-      console.log('🧹 Cleaning up Level 2...');
-      stop();
-      deleteAllRecordings();
-    };
-  }, [stop, deleteAllRecordings]);
+    if (dialog && visibleCount === 0) {
+      handleNext();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialog]);
 
-  if (loading || !dialog) {
+  // Обработка результатов распознавания
+  useSpeechRecognitionEvent('result', (event) => {
+    const transcript = event.results[0]?.transcript || '';
+    setRecognizedText(transcript);
+
+    if (event.isFinal && dialog) {
+      handleSpeechResult(transcript);
+    }
+  });
+
+  // Автопрокрутка
+  const scrollToBottom = () => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
+  // Обработка результата речи
+  const handleSpeechResult = (transcript) => {
+    const currentIndex = visibleCount - 1;
+    const originalText = dialog.content.target[currentIndex];
+    const acc = calculateSimilarity(originalText, transcript);
+
+    setCurrentAccuracy(acc);
+    setShowResult(true);
+    setIsRecording(false);
+
+    // Сохраняем результат
+    setResults((prev) => {
+      const newResults = [...prev];
+      newResults[currentIndex] = acc;
+      return newResults;
+    });
+
+    // Автопереход при PERFECT (>= 95%)
+    if (acc >= 95) {
+      autoNextTimerRef.current = setTimeout(() => {
+        handleNext();
+      }, 5000);
+    }
+
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+    }
+  };
+
+  // Начать запись
+  const startRecording = async () => {
+    if (!dialog || showResult) return;
+
+    // Запрашиваем разрешения
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      console.log('❌ No microphone permission');
+      return;
+    }
+
+    try {
+      setIsRecording(true);
+      setRecognizedText('');
+
+      await ExpoSpeechRecognitionModule.start({
+        lang: dialog.target_language || 'fi-FI',
+        interimResults: true,
+        maxAlternatives: 1,
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setIsRecording(false);
+    }
+  };
+
+  // Остановить запись
+  const stopRecording = () => {
+    try {
+      ExpoSpeechRecognitionModule.stop();
+      setIsRecording(false);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      setIsRecording(false);
+    }
+  };
+
+  // Повторить текущую реплику (улучшить результат)
+  const handleRetry = () => {
+    setShowResult(false);
+    setRecognizedText('');
+    setCurrentAccuracy(0);
+  };
+
+  // С начала
+  const handleRestart = () => {
+    Speech.stop();
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+    }
+
+    // Добавить очистку таймера:
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
+
+    setResults([]);
+    setShowResult(false);
+    setRecognizedText('');
+    setCurrentAccuracy(0);
+    startTimeRef.current = Date.now();
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+
+    setVisibleCount(0);
+
+    setTimeout(() => {
+      setVisibleCount(1);
+      scrollToBottom();
+
+      const firstText = dialog.content.target[0];
+      setTimeout(() => {
+        Speech.speak(firstText, {
+          language: dialog.target_language || 'fi-FI',
+          rate: 0.85,
+          pitch: 1.0,
+        });
+      }, 500);
+    }, 100);
+  };
+
+  // Следующая реплика
+  const handleNext = async () => {
+    if (!dialog) return;
+
+    // Отменяем автопереход если был
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
+
+    const totalReplicas = dialog.content.target.length;
+
+    // Если это последняя реплика -> модалка
+    if (visibleCount >= totalReplicas) {
+      setIsCompleted(true);
+
+      // Сохраняем результат
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        const avgAccuracy = results.reduce((a, b) => a + b, 0) / results.length;
+
+        await supabase.from('training_logs').insert({
+          user_id: user.id,
+          dialog_id: id,
+          type: 'level_2',
+          metadata: {
+            isCompleted: avgAccuracy >= 70,
+            accuracy: Math.round(avgAccuracy),
+            results,
+          },
+        });
+      } catch (error) {
+        console.error('Error saving results:', error);
+      }
+
+      return;
+    }
+
+    Speech.stop();
+    setShowResult(false);
+    setRecognizedText('');
+    setCurrentAccuracy(0);
+
+    setVisibleCount((prev) => prev + 1);
+    scrollToBottom();
+
+    const currentIndex = visibleCount;
+    const text = dialog.content.target[currentIndex];
+
+    setTimeout(() => {
+      Speech.speak(text, {
+        language: dialog.target_language || 'fi-FI',
+        rate: 0.85,
+        pitch: 1.0,
+      });
+    }, 500);
+  };
+
+  // Выход
+  const handleExit = () => {
+    Speech.stop();
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+    }
+    router.back();
+  };
+
+  // Закрыть модалку
+  const handleCloseModal = async () => {
+    setIsCompleted(false);
+    Speech.stop();
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+    }
+    router.back();
+  };
+
+  // Повторить уровень
+  const handleRepeat = () => {
+    setIsCompleted(false);
+    Speech.stop();
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+    }
+
+    setVisibleCount(0);
+    setResults([]);
+    setShowResult(false);
+    setRecognizedText('');
+    setCurrentAccuracy(0);
+    startTimeRef.current = Date.now();
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+
+    setTimeout(() => {
+      handleNext();
+    }, 300);
+  };
+
+  if (isLoading) {
     return (
       <View className='flex-1 bg-bgMain items-center justify-center'>
         <ActivityIndicator size='large' color='hsl(130, 40%, 50%)' />
@@ -116,367 +472,166 @@ export default function Level2Training() {
     );
   }
 
+  if (!dialog) {
+    return (
+      <View className='flex-1 bg-bgMain items-center justify-center'>
+        <Text className='text-textText'>Dialog not found</Text>
+      </View>
+    );
+  }
+
   const totalReplicas = dialog.content.target.length;
-  const currentText = dialog.content.target[currentIndex];
-  const currentNative = dialog.content.native[currentIndex];
-  const currentAttempts = replicaResults[currentIndex]?.attempts || 0;
-  const completedCount = Object.values(replicaResults).filter((r) => r.bestAccuracy >= 70).length;
-
-  // Обработка записи
-  const handleRecord = async () => {
-    // Проверяем лимит PRO функций перед каждой попыткой
-    if (!canUseProFeatures(usageData, profile)) {
-      Alert.alert(t('training.level2.errors.proLimitReached'), t('common.upgradeToUnlock'), [
-        { text: t('common.ok') },
-        { text: t('common.upgrade'), onPress: () => router.push('/pricing') },
-      ]);
-      return;
-    }
-
-    if (isRecording) {
-      // Останавливаем запись
-      try {
-        const result = await stopRecording();
-        if (result?.uri) {
-          currentRecordingUri.current = result.uri;
-          await processRecording(result.uri);
-        }
-      } catch (error) {
-        console.error('Stop recording error:', error);
-        Alert.alert(t('common.error'), t('training.level2.errors.recordingFailed'));
-      }
-    } else {
-      // Начинаем запись
-      try {
-        await startRecording();
-      } catch (error) {
-        console.error('Start recording error:', error);
-
-        if (error.message.includes('permission')) {
-          Alert.alert(t('common.error'), t('training.level2.errors.micPermission'));
-        } else {
-          Alert.alert(t('common.error'), t('training.level2.errors.recordingFailed'));
-        }
-      }
-    }
-  };
-
-  // Обработка распознавания
-  const processRecording = async (uri) => {
-    try {
-      console.log('🎧 Processing recording:', uri);
-
-      // Распознаём речь
-      const recognizedText = await recognizeSpeech(uri, dialog.target_language);
-      console.log('Recognized:', recognizedText);
-
-      // Сравниваем с оригиналом
-      const accuracy = calculateAccuracy(currentText, recognizedText);
-      console.log('Accuracy:', accuracy);
-
-      // Обновляем результаты
-      handleAttemptResult(accuracy, recognizedText);
-
-      // Показываем результат
-      setCurrentResult({
-        original: currentText,
-        recognized: recognizedText,
-        accuracy,
-      });
-      setShowResult(true);
-
-      // Удаляем файл записи
-      await deleteRecording(uri);
-      currentRecordingUri.current = null;
-    } catch (error) {
-      console.error('Processing error:', error);
-
-      // Удаляем файл даже при ошибке
-      if (uri) {
-        await deleteRecording(uri);
-      }
-
-      // Показываем понятную ошибку
-      if (error.message.includes('rate limit')) {
-        Alert.alert(t('common.error'), t('training.level2.errors.rateLimitExceeded'));
-      } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        Alert.alert(t('common.error'), t('training.level2.errors.networkError'));
-      } else {
-        Alert.alert(t('common.error'), t('training.level2.errors.recognitionFailed'));
-      }
-    }
-  };
-
-  // Обработка результата попытки
-  const handleAttemptResult = (accuracy, recognizedText) => {
-    const newAttemptNumber = currentAttempts + 1;
-
-    // Обновляем результаты реплики
-    setReplicaResults((prev) => ({
-      ...prev,
-      [currentIndex]: {
-        bestAccuracy: Math.max(prev[currentIndex]?.bestAccuracy || 0, accuracy),
-        attempts: newAttemptNumber,
-        lastRecognized: recognizedText,
-        allRecognized: [...(prev[currentIndex]?.allRecognized || []), recognizedText],
-      },
-    }));
-
-    // Логика использования PRO-функций
-    let newProUsed = proFeaturesUsedInSession;
-
-    // Правило 1: >3 попытки на реплику
-    if (newAttemptNumber === 4 && currentAttempts === 3) {
-      newProUsed++;
-      console.log('✅ PRO used: >3 attempts on replica', currentIndex);
-      incrementProFeatureUsage();
-    }
-
-    // Правило 2: Пройдено >=50% реплик
-    if (accuracy >= 70) {
-      const halfReplicas = Math.floor(totalReplicas / 2);
-      const newCompletedCount = completedCount + 1;
-
-      if (newCompletedCount >= halfReplicas && proFeaturesUsedInSession === 0) {
-        newProUsed++;
-        console.log('✅ PRO used: 50% threshold reached');
-        incrementProFeatureUsage();
-      }
-    }
-
-    setProFeaturesUsedInSession(newProUsed);
-  };
-
-  // Инкремент счётчика PRO функций в БД
-  const incrementProFeatureUsage = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { error } = await supabase.rpc('increment_pro_feature_usage', {
-        p_user_id: user.id,
-      });
-
-      if (error) throw error;
-
-      console.log('✅ PRO feature usage incremented');
-
-      // Обновляем локальный usage
-      const { data: updatedUsage } = await supabase.from('usage_counters').select('*').eq('user_id', user.id).single();
-
-      if (updatedUsage) {
-        setUsageData(updatedUsage);
-      }
-    } catch (error) {
-      console.error('Failed to increment PRO usage:', error);
-    }
-  };
-
-  // Прослушать реплику
-  const handlePlayAudio = async () => {
-    await stop();
-    await playSequence([currentText], dialog.target_language, 1.0);
-  };
-
-  // Следующая реплика
-  const handleNext = async () => {
-    await stop();
-    setShowResult(false);
-    setCurrentResult(null);
-
-    if (currentIndex < totalReplicas - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      // Последняя реплика - завершение
-      await handleCompletion();
-    }
-  };
-
-  // Попробовать ещё раз
-  const handleTryAgain = () => {
-    setShowResult(false);
-    setCurrentResult(null);
-  };
-
-  // Завершение тренировки
-  const handleCompletion = async () => {
-    await stop();
-    await deleteAllRecordings();
-
-    const results = Object.values(replicaResults);
-    const totalAccuracy = results.reduce((sum, r) => sum + r.bestAccuracy, 0);
-    const avgAccuracy = Math.round(totalAccuracy / results.length);
-    const minAccuracy = Math.min(...results.map((r) => r.bestAccuracy));
-
-    const isCompleted = avgAccuracy >= 70 && minAccuracy >= 50;
-
-    const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const correctCount = results.filter((r) => r.bestAccuracy >= 70).length;
-
-    await saveTrainingLog({
-      dialogId: id,
-      type: 'level_2',
-      accuracyScore: avgAccuracy,
-      totalReplicas: totalReplicas,
-      correctReplicas: correctCount,
-      durationSeconds: duration,
-      metadata: {
-        results: Object.entries(replicaResults).map(([index, result]) => ({
-          replica_index: parseInt(index),
-          original_text: dialog.content.target[index],
-          recognized_texts: result.allRecognized,
-          best_accuracy: result.bestAccuracy,
-          attempts: result.attempts,
-        })),
-        avg_accuracy: avgAccuracy,
-        min_accuracy: minAccuracy,
-        isCompleted: isCompleted,
-        proFeaturesUsed: proFeaturesUsedInSession,
-      },
-    });
-
-    setFinalAccuracy(avgAccuracy);
-    setShowCompletion(true);
-  };
-
-  // Выход
-  const handleExit = () => {
-    Alert.alert(t('common.confirm'), t('common.exitWithoutSaving'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.exit'),
-        style: 'destructive',
-        onPress: async () => {
-          await stop();
-          await deleteAllRecordings();
-          router.back();
-        },
-      },
-    ]);
-  };
-
-  // Повторить уровень
-  const handleRepeat = async () => {
-    setShowCompletion(false);
-    setCurrentIndex(0);
-    setReplicaResults({});
-    setShowResult(false);
-    setCurrentResult(null);
-    setProFeaturesUsedInSession(0);
-    startTimeRef.current = Date.now();
-  };
-
-  // Закрыть модалку
-  const handleCloseModal = async () => {
-    setShowCompletion(false);
-    router.back();
-  };
+  const evaluation = getEvaluation(currentAccuracy);
 
   return (
     <View className='flex-1 bg-bgMain'>
       {/* Header */}
-      <View className='bg-white border-b border-brdLight px-6 pt-12 pb-4'>
-        <Text className='text-lg text-textHead text-center mb-2' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
+      <View className='bg-white border-b border-brdLight px-6 pt-8 pb-2'>
+        <Text className='text-lg text-textHead text-center mb-1' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
           {t('training.level2.title')}
         </Text>
-        <Text className='text-sm text-textText text-center' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-          {t('training.level2.progress', { current: currentIndex + 1, total: totalReplicas })}
+        <Text className='text-sm text-textText text-center mt-1' style={{ fontFamily: 'RobotoCondensed_500Medium' }}>
+          {t('training.level2.progress', { current: visibleCount, total: totalReplicas })}
         </Text>
       </View>
 
-      {/* Content */}
-      <ScrollView className='flex-1 px-6 pt-6' showsVerticalScrollIndicator={false}>
-        {/* Реплика */}
-        <View className='bg-white rounded-2xl p-6 mb-6 border border-brdLight'>
-          <Text className='text-2xl text-textHead text-center mb-4' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-            {currentText}
-          </Text>
-          <Text className='text-base text-textText text-center' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-            {currentNative}
-          </Text>
-        </View>
-
-        {/* Результат (если есть) */}
-        {showResult && currentResult && (
-          <View className='mb-6'>
-            <AccuracyResult
-              original={currentResult.original}
-              recognized={currentResult.recognized}
-              accuracy={currentResult.accuracy}
-            />
-          </View>
-        )}
-
-        {/* Кнопка записи */}
-        <View className='items-center mb-6'>
-          <RecordButton
-            isRecording={isRecording}
-            isProcessing={isProcessing}
-            onPress={handleRecord}
-            disabled={isProcessing || showResult}
-          />
-          <Text className='text-sm text-textText mt-4 text-center' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
-            {isRecording
-              ? t('training.level2.recording')
-              : isProcessing
-                ? t('training.level2.processing')
-                : t('training.level2.tapToRecord')}
-          </Text>
-        </View>
-
-        {/* Кнопки действий (если показан результат) */}
-        {showResult && (
-          <View className='flex-row gap-3 mb-6'>
-            <Pressable onPress={handleTryAgain} className='flex-1 bg-yellow-500 rounded-xl py-4 active:bg-yellow-600'>
-              <Text className='text-white text-center text-base' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-                {t('training.level2.tryAgain')}
-              </Text>
-            </Pressable>
-
-            <Pressable onPress={handleNext} className='flex-1 bg-greenDefault rounded-xl py-4 active:bg-greenDark'>
-              <Text className='text-white text-center text-base' style={{ fontFamily: 'RobotoCondensed_700Bold' }}>
-                {currentIndex < totalReplicas - 1 ? t('training.level2.nextReplica') : t('common.finish')}
-              </Text>
-            </Pressable>
-          </View>
-        )}
+      {/* Content - Replicas */}
+      <ScrollView
+        ref={scrollViewRef}
+        className='flex-1 px-6 py-4'
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {dialog.content.target.slice(0, visibleCount).map((text, index) => (
+          <Animated.View key={index} entering={FadeInDown.delay(100).duration(400)}>
+            <ReplicaCard text={text} translation={dialog.content.native[index]} isLeft={index % 2 === 0} />
+          </Animated.View>
+        ))}
       </ScrollView>
 
-      {/* Footer */}
-      <View className='bg-white border-t border-brdLight px-6 py-4'>
-        <View className='flex-row justify-between gap-3'>
-          {/* Выход */}
-          <Pressable
-            onPress={handleExit}
-            className='w-14 h-14 bg-yellow-500 rounded-full items-center justify-center active:bg-yellow-600'
-          >
-            <Ionicons name='close' size={28} color='white' />
-          </Pressable>
+      {/* Карточка результата */}
+      {showResult && (
+        <View className='absolute bottom-32 left-6 right-6'>
+          <Animated.View entering={FadeInDown.delay(100).duration(400)} className='mt-4'>
+            <View className='bg-white border-2 rounded-3xl p-4' style={{ borderColor: evaluation.color }}>
+              {/* ================= */}
+              <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_500Medium' }}>
+                {t('training.level2.youSaid')}:
+              </Text>
+              <Text className='text-base mb-3'>
+                <Text className='text-textHead' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+                  &ldquo;
+                </Text>
+                {createVisualDiff(dialog.content.target[visibleCount - 1], recognizedText).map((segment, idx) => (
+                  <Text
+                    key={idx}
+                    style={{
+                      fontFamily: 'RobotoCondensed_400Regular',
+                      color: segment.isError ? '#f44336' : 'hsl(29, 10%, 20%)',
+                      fontWeight: segment.isError ? '700' : '400',
+                    }}
+                  >
+                    {segment.text}
+                  </Text>
+                ))}
+                <Text className='text-textHead' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+                  &rdquo;
+                </Text>
+              </Text>
+              {/* ================== */}
+              <Text className='text-sm text-textText mb-2' style={{ fontFamily: 'RobotoCondensed_500Medium' }}>
+                {t('training.level2.correct')}:
+              </Text>
+              <Text className='text-base text-textHead mb-4' style={{ fontFamily: 'RobotoCondensed_400Regular' }}>
+                &ldquo;{dialog.content.target[visibleCount - 1]}&rdquo;
+              </Text>
 
-          {/* Прослушать */}
+              <View className='flex-row items-center justify-center py-3 rounded-2xl'>
+                <Text className='text-3xl mr-2'>{evaluation.emoji}</Text>
+                <Text className='text-2xl' style={{ fontFamily: 'RobotoCondensed_700Bold', color: evaluation.color }}>
+                  {currentAccuracy}% {evaluation.level}
+                </Text>
+              </View>
+
+              {currentAccuracy < 95 && (
+                <Text
+                  className='text-xs text-textText text-center mt-3'
+                  style={{ fontFamily: 'RobotoCondensed_400Regular' }}
+                >
+                  {t('training.level2.useButtons')}
+                </Text>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+      )}
+
+      {/* Микрофон (когда нет результата) */}
+      {!showResult && visibleCount > 0 && (
+        <View className='absolute bottom-32 self-center'>
           <Pressable
-            onPress={handlePlayAudio}
-            disabled={isRecording || isProcessing}
-            className={`flex-1 rounded-xl py-4 items-center justify-center ${
-              isRecording || isProcessing ? 'bg-gray-300' : 'bg-black active:bg-gray-800'
+            onPress={isRecording ? stopRecording : startRecording}
+            className={`w-20 h-20 rounded-full items-center justify-center shadow-lg ${
+              isRecording ? 'bg-red-500' : 'bg-red-600'
             }`}
           >
-            <Ionicons name='volume-high' size={24} color='white' />
+            <Ionicons name={isRecording ? 'mic' : 'mic-off'} size={40} color='white' />
+          </Pressable>
+          {isRecording && (
+            <Text
+              className='text-xs text-textText text-center mt-2'
+              style={{ fontFamily: 'RobotoCondensed_500Medium' }}
+            >
+              {t('training.level2.recording')}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Footer - Control Buttons */}
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-10'>
+        <View className='flex-row gap-1'>
+          {/* 1. Выход */}
+          <Pressable
+            onPress={handleExit}
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
+          >
+            <Ionicons name='close' size={36} color='#0a5c18' />
+          </Pressable>
+
+          {/* 2. С начала */}
+          <Pressable
+            onPress={handleRestart}
+            disabled={visibleCount === 0}
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
+          >
+            <Ionicons name='repeat' size={36} color='#0a5c18' />
+          </Pressable>
+
+          {/* 3. Повтор текущей (озвучка) */}
+          <Pressable
+            onPress={handleRetry}
+            disabled={visibleCount === 0 || isRecording}
+            className='w-16 h-16 rounded-full bg-bgSide items-center justify-center m-auto active:opacity-80'
+          >
+            <Ionicons name='refresh' size={36} color='#0a5c18' />
+          </Pressable>
+
+          {/* 4. Следующая (зелёный) - активна только если showResult И accuracy < 95 */}
+          <Pressable
+            onPress={handleNext}
+            disabled={!showResult && visibleCount > 0}
+            className={`w-16 h-16 rounded-full items-center justify-center m-auto active:opacity-80 ${
+              showResult || visibleCount === 0 ? 'bg-success' : 'bg-bgCard opacity-50'
+            }`}
+          >
+            <Ionicons name='arrow-forward' size={36} color='#0a5c18' />
           </Pressable>
         </View>
       </View>
 
       {/* Completion Modal */}
-      <CompletionModal
-        visible={showCompletion}
-        level={2}
-        accuracy={finalAccuracy}
-        onClose={handleCloseModal}
-        onRepeat={handleRepeat}
-      />
+      <CompletionModal visible={isCompleted} level={2} onClose={handleCloseModal} onRepeat={handleRepeat} />
     </View>
   );
 }

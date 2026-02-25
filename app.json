@@ -18,7 +18,9 @@
         "backgroundColor": "#FAF8F5"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["RECORD_AUDIO"],
+      "package": "com.revontuli.lflow"
     },
     "web": {
       "output": "static",
@@ -38,11 +40,24 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Lingua Flow to access your microphone for speech recognition.",
+          "speechRecognitionPermission": "Allow Lingua Flow to securely recognize using speech recognition."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f96b7bc1-30d1-4b73-a631-2bf0ec163b7d"
+      }
     }
   }
 }

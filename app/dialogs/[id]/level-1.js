@@ -233,7 +233,7 @@ export default function Level1Training() {
       </ScrollView>
 
       {/* Footer - Control Buttons  */}
-      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-8'>
+      <View className='bg-white border-t border-brdLight px-6 pt-4 pb-10'>
         <View className='flex-row gap-1'>
           {/* 1. Выход */}
           <Pressable
