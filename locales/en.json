@@ -189,6 +189,17 @@
         "proLimitReached": "PRO features limit reached"
       }
     },
+    "level3": {
+      "title": "Level 3: Translation",
+      "description": "Check translation accuracy by meaning",
+      "progress": "Phrase {current} of {total}",
+      "youSaid": "You said",
+      "aiFeedback": "AI Feedback",
+      "recording": "Recording...",
+      "evaluating": "Evaluating...",
+      "evaluationError": "Evaluation error. Try again.",
+      "useButtons": "Use buttons below to continue"
+    },
     "level4": {
       "title": "Listen and choose the correct translation.",
       "progress": "Replica {{current}} of {{total}}",

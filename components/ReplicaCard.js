@@ -1,7 +1,7 @@
 // components/ReplicaCard.js
 import { Text, View } from 'react-native';
 
-export default function ReplicaCard({ text, translation, isLeft, onPlay }) {
+export default function ReplicaCard({ text, translation, isLeft, textColor, isItalic = false }) {
   return (
     <View className={`mb-2 ${isLeft ? 'items-start' : 'items-end'}`}>
       <View
@@ -11,21 +11,22 @@ export default function ReplicaCard({ text, translation, isLeft, onPlay }) {
         `}
       >
         {/* Основной текст */}
-        <Text className='text-base text-textHead mb-1' style={{ fontFamily: 'RobotoCondensed_500Medium' }}>
+        <Text
+          className='text-base mb-1'
+          style={{
+            fontFamily: isItalic ? 'RobotoCondensed_400Regular_Italic' : 'RobotoCondensed_500Medium',
+            color: textColor || 'hsl(29, 10%, 20%)',
+          }}
+        >
           {text}
         </Text>
 
         {/* Перевод */}
-        <Text className='text-base text-textTitle' style={{ fontFamily: 'RobotoCondensed_400Regular_Italic' }}>
-          {translation}
-        </Text>
-
-        {/* Play button для реплики */}
-        {/* {onPlay && (
-          <Pressable onPress={onPlay} className='absolute top-2 right-2 p-1'>
-            <Ionicons name='volume-medium' size={18} color='hsl(142, 71%, 35%)' />
-          </Pressable>
-        )} */}
+        {translation && (
+          <Text className='text-base text-textTitle' style={{ fontFamily: 'RobotoCondensed_400Regular_Italic' }}>
+            {translation}
+          </Text>
+        )}
       </View>
     </View>
   );

@@ -1,5 +1,6 @@
 // app/(tabs)/index.js
-// Главный экран
+// Main screen with list of dialogs, grouped by levels, and usage limits card. Allows creating new dialogs and navigating to dialog details.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';

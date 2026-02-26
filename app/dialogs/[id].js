@@ -1,4 +1,6 @@
 // app/dialogs/[id].js
+// Screen for viewing a single dialog with replicas, audio playback, and actions (analyze/export/delete)
+
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -6,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import ReplicaCard from '../../components/ReplicaCard';
 import TrainingButton from '../../components/TrainingButton';
+import UpgradeModal from '../../components/UpgradeModal';
 import { useAudioPlayer } from '../../hooks/useAudioPlayer';
 import { canUseProFeatures, getEffectivePlan } from '../../lib/planUtils';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +23,8 @@ export default function ViewDialogScreen() {
   const [usage, setUsage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [showLevel3UpgradeModal, setShowLevel3UpgradeModal] = useState(false);
+  const [level3ModalShown, setLevel3ModalShown] = useState(false);
 
   // Load dialog data
   const loadData = useCallback(async () => {
@@ -118,6 +123,35 @@ export default function ViewDialogScreen() {
     } else {
       Alert.alert('Coming soon', 'Export feature will be implemented later');
     }
+  };
+
+  // Обработка клика на Level 3
+  const handleLevel3Click = () => {
+    if (!hasProFeatures) {
+      // Если модалка УЖЕ показывалась - ничего не делаем
+      if (level3ModalShown) {
+        return;
+      }
+
+      // Показываем модалку первый раз
+      setShowLevel3UpgradeModal(true);
+      return;
+    }
+
+    // Есть доступ - открываем Level 3
+    router.push(`/dialogs/${id}/level-3`);
+  };
+
+  // Закрыть Upgrade modal для Level 3
+  const handleLevel3UpgradeClose = () => {
+    setShowLevel3UpgradeModal(false);
+    setLevel3ModalShown(true); // Помечаем что модалка показана
+  };
+
+  // Переход на страницу pricing
+  const handleLevel3Upgrade = () => {
+    setShowLevel3UpgradeModal(false);
+    router.push('/pricing');
   };
 
   const handleDelete = () => {
@@ -230,7 +264,12 @@ export default function ViewDialogScreen() {
           <TrainingButton level={0} dialogId={id} locked={false} />
           <TrainingButton level={1} dialogId={id} locked={false} />
           <TrainingButton level={2} dialogId={id} locked={!hasProFeatures} />
-          <TrainingButton level={3} dialogId={id} locked={!hasProFeatures} />
+          <TrainingButton
+            level={3}
+            dialogId={id}
+            locked={!hasProFeatures && level3ModalShown}
+            onPress={handleLevel3Click}
+          />
           <TrainingButton level={4} dialogId={id} locked={false} />
         </View>
       </View>
@@ -291,6 +330,13 @@ export default function ViewDialogScreen() {
           </Pressable>
         </Pressable>
       )}
+
+      {/* Upgrade Modal для Level 3 */}
+      <UpgradeModal
+        visible={showLevel3UpgradeModal}
+        onClose={handleLevel3UpgradeClose}
+        onUpgrade={handleLevel3Upgrade}
+      />
     </View>
   );
 }
