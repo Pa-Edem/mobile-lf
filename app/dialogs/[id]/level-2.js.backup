@@ -10,7 +10,6 @@ import { ActivityIndicator, PermissionsAndroid, Platform, Pressable, ScrollView,
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import CompletionModal from '../../../components/CompletionModal';
 import ReplicaCard from '../../../components/ReplicaCard';
-import { useTrainingLogger } from '../../../hooks/useTrainingLogger';
 import { supabase } from '../../../lib/supabase';
 
 // Запрос разрешений на микрофон
@@ -168,7 +167,6 @@ export default function Level2Training() {
   const startTimeRef = useRef(null);
   const autoNextTimerRef = useRef(null);
   const { t } = useTranslation();
-  const { saveTrainingLog } = useTrainingLogger();
 
   const [dialog, setDialog] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,7 +176,7 @@ export default function Level2Training() {
   const [recognizedText, setRecognizedText] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [currentAccuracy, setCurrentAccuracy] = useState(0);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState([]); // История результатов по каждой реплике
 
   // Загрузка диалога
   const loadDialog = useCallback(async () => {
@@ -377,35 +375,23 @@ export default function Level2Training() {
     if (visibleCount >= totalReplicas) {
       setIsCompleted(true);
 
-      // Получаем профиль для проверки плана
+      // Сохраняем результат
       try {
-        // const {
-        //   data: { user },
-        // } = await supabase.auth.getUser();
-        // const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-        // const plan = getEffectivePlan(profile);
-
-        // Сохраняем статистику только для PRO/Premium планов
-        // if (plan !== 'free') {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         const avgAccuracy = results.reduce((a, b) => a + b, 0) / results.length;
-        const isCompleted = avgAccuracy >= 70;
-        const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        const correctCount = results.filter((acc) => acc >= 85).length;
 
-        await saveTrainingLog({
-          dialogId: id,
+        await supabase.from('training_logs').insert({
+          user_id: user.id,
+          dialog_id: id,
           type: 'level_2',
-          accuracyScore: Math.round(avgAccuracy),
-          totalReplicas: totalReplicas,
-          correctReplicas: correctCount,
-          durationSeconds: duration,
           metadata: {
-            isCompleted,
+            isCompleted: avgAccuracy >= 70,
             accuracy: Math.round(avgAccuracy),
             results,
           },
         });
-        // }
       } catch (error) {
         console.error('Error saving results:', error);
       }

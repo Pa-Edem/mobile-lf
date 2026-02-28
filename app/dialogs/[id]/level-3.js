@@ -1,4 +1,5 @@
 // app/dialogs/[id]/level-3.js
+
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Speech from 'expo-speech';
@@ -327,16 +328,36 @@ export default function Level3Training() {
     if (visibleCount >= totalReplicas) {
       setIsCompleted(true);
 
-      // Подсчитываем среднюю точность
+      // Получаем профиль для проверки плана
+      // const {
+      //   data: { user },
+      // } = await supabase.auth.getUser();
+      // const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      // const plan = getEffectivePlan(profile);
+
+      // Подсчитываем сколько реплик пройдено (где есть результат)
+      const completedReplicas = results.filter((r) => r > 0).length;
+
+      // PRO функция считается использованной если пройдено >50% реплик
+      const shouldCountUsage = completedReplicas > totalReplicas / 2;
+
+      if (shouldCountUsage) {
+        // Инкрементируем счётчик PRO функций
+        try {
+          const { error: incrementError } = await supabase.rpc('increment_pro_features_used');
+          if (incrementError) {
+            console.error('Error incrementing PRO features:', incrementError);
+          }
+        } catch (error) {
+          console.error('Error incrementing PRO features:', error);
+        }
+      }
+
+      // Сохраняем статистику только для PRO/Premium планов
+      // if (plan !== 'free') {
       const avgAccuracy = results.reduce((a, b) => a + b, 0) / results.length;
-
-      // Определяем завершённость уровня
       const isCompleted = avgAccuracy >= 50;
-
-      // Продолжительность тренировки
       const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-      // Количество правильных ответов (PERFECT + GOOD)
       const correctCount = results.filter((acc) => acc >= 75).length;
 
       // Сохраняем лог тренировки
@@ -353,16 +374,7 @@ export default function Level3Training() {
           results,
         },
       });
-
-      // Инкрементируем счётчик PRO функций
-      try {
-        const { error: incrementError } = await supabase.rpc('increment_pro_features_used');
-        if (incrementError) {
-          console.error('Error incrementing PRO features:', incrementError);
-        }
-      } catch (error) {
-        console.error('Error incrementing PRO features:', error);
-      }
+      // }
 
       return;
     }

@@ -1,4 +1,5 @@
 // app/(tabs)/settings.js
+
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';

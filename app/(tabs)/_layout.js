@@ -1,4 +1,5 @@
 // app/(tabs)/_layout.js
+
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';

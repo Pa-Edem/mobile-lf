@@ -1,4 +1,5 @@
 // app/index.js
+
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

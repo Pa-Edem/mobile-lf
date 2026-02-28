@@ -191,34 +191,20 @@ export default function Level4Training() {
     const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
     const correctCount = totalReplicas - wrongAnswers.length;
 
-    // Получаем профиль для проверки плана
-    try {
-      // const {
-      //   data: { user },
-      // } = await supabase.auth.getUser();
-      // const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      // const plan = getEffectivePlan(profile);
-
-      // Сохраняем статистику только для PRO/Premium планов
-      // if (plan !== 'free') {
-      await saveTrainingLog({
-        dialogId: id,
-        type: 'level_4',
-        accuracyScore: accuracy,
-        totalReplicas: totalReplicas,
-        correctReplicas: correctCount,
-        durationSeconds: duration,
-        metadata: {
-          errors: wrongAnswers,
-          attempts: attempts,
-          totalAttempts: totalAttempts,
-          isCompleted: isCompleted,
-        },
-      });
-      // }
-    } catch (error) {
-      console.error('Error saving results:', error);
-    }
+    await saveTrainingLog({
+      dialogId: id,
+      type: 'level_4',
+      accuracyScore: accuracy,
+      totalReplicas: totalReplicas,
+      correctReplicas: correctCount,
+      durationSeconds: duration,
+      metadata: {
+        errors: wrongAnswers,
+        attempts: attempts,
+        totalAttempts: totalAttempts,
+        isCompleted: isCompleted,
+      },
+    });
 
     // Сохраняем accuracy для модалки
     setFinalAccuracy(accuracy);
