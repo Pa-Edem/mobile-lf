@@ -162,11 +162,13 @@
       }
     },
     "level2": {
-      "title": "Repeat the phrase aloud",
+      "title": "Listen and repeat pronunciation step by step.",
       "progress": "Phrase {{current}} of {{total}}",
       "original": "Original",
       "youSaid": "You said",
+      "correct": "Correct",
       "accuracy": "Accuracy",
+      "useButtons": "Use buttons below to continue",
       "tapToRecord": "Tap to record",
       "recording": "Recording...",
       "processing": "Processing...",
@@ -190,8 +192,7 @@
       }
     },
     "level3": {
-      "title": "Level 3: Translation",
-      "description": "Check translation accuracy by meaning",
+      "title": "Check translation accuracy by meaning",
       "progress": "Phrase {current} of {total}",
       "youSaid": "You said",
       "aiFeedback": "AI Feedback",
